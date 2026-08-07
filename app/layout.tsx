@@ -15,9 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Better Auth Starter",
+  title: "medibilldo",
   description:
-    "Simple starter pack for Better Auth, with Shadcn, Drizzle, and Neon",
+    "medibilldo - Secure Billing Platform with Role-Based Authentication",
 };
 
 export default function RootLayout({
@@ -32,9 +32,10 @@ export default function RootLayout({
       >
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="light"
+          forcedTheme="light"
+          enableSystem={false}
           disableTransitionOnChange
-          enableSystem
         >
           {children}
           <Toaster />
@@ -43,3 +44,4 @@ export default function RootLayout({
     </html>
   );
 }
+
