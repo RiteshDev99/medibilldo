@@ -1,10 +1,10 @@
 "use server";
 
-import { eq, inArray, not } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "@/db/drizzle";
-import { member, user } from "@/db/schema";
+import { user } from "@/db/schema";
 import { auth } from "@/lib/auth";
 
 export const getCurrentUser = async () => {
@@ -56,7 +56,8 @@ export const signIn = async (email: string, password: string) => {
 export const signUp = async (
   email: string,
   password: string,
-  username: string
+  username: string,
+  role: string
 ) => {
   try {
     await auth.api.signUpEmail({
@@ -64,6 +65,7 @@ export const signUp = async (
         email,
         password,
         name: username,
+        role,
       },
     });
 
@@ -81,24 +83,15 @@ export const signUp = async (
   }
 };
 
-export const getUsers = async (organizationId: string) => {
+export const getAllUsers = async () => {
   try {
-    const members = await db.query.member.findMany({
-      where: eq(member.organizationId, organizationId),
-    });
-
     const users = await db.query.user.findMany({
-      where: not(
-        inArray(
-          user.id,
-          members.map((m) => m.userId)
-        )
-      ),
+      orderBy: (user, { desc }) => [desc(user.createdAt)],
     });
-
     return users;
   } catch (error) {
     console.error(error);
     return [];
   }
 };
+

@@ -5,28 +5,14 @@ import { auth } from "@/lib/auth";
 
 export const isAdmin = async () => {
   try {
-    const { success, error } = await auth.api.hasPermission({
+    const session = await auth.api.getSession({
       headers: await headers(),
-      body: {
-        permissions: {
-          organization: ["update", "delete"],
-        },
-      },
     });
 
-    if (error) {
-      return {
-        success: false,
-        error: error || "Failed to check permissions",
-      };
-    }
-
-    return success;
+    return session?.user?.role === "ADMIN";
   } catch (error) {
     console.error(error);
-    return {
-      success: false,
-      error: error || "Failed to check permissions",
-    };
+    return false;
   }
 };
+
