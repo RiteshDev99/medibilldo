@@ -1,39 +1,34 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ModeSwitcher } from "@/components/mode-switcher";
 import { Button } from "@/components/ui/button";
 
 export default function Home() {
   return (
     <>
       <header className="absolute top-0 right-0 flex items-center justify-end p-4">
-        <ModeSwitcher />
+        <span className="text-sm font-semibold tracking-wider text-muted-foreground uppercase">medibilldo</span>
       </header>
       <div className="flex h-screen flex-col items-center justify-center gap-5 px-5 text-center">
-        <Image
-          alt="Better Auth"
-          className="rounded-lg dark:invert"
-          height={100}
-          src="/better-auth-starter.png"
-          width={100}
-        />
+        <div className="size-16 flex items-center justify-center rounded-2xl bg-black text-white font-extrabold text-2xl tracking-tighter shadow-sm mb-2">
+          mb
+        </div>
 
-        <h1 className="font-bold text-4xl">Better Auth Starter</h1>
+        <h1 className="font-bold text-4xl tracking-tight">medibilldo</h1>
 
-        <p className="text-lg">
-          This is a starter project for Better Auth. It is a simple project that
-          uses Better Auth to authenticate users.
+        <p className="text-lg text-muted-foreground max-w-md">
+          A secure role-based billing management platform built for modern practices.
         </p>
 
-        <div className="flex gap-2">
+        <div className="flex gap-3 mt-2">
           <Link href="/login">
-            <Button>Login</Button>
+            <Button variant="outline" className="px-6 border-black hover:bg-black hover:text-white transition-colors duration-200">Login</Button>
           </Link>
           <Link href="/signup">
-            <Button>Signup</Button>
+            <Button className="px-6 bg-black text-white hover:bg-zinc-800 transition-colors duration-200">Signup</Button>
           </Link>
         </div>
       </div>
     </>
   );
 }
+
