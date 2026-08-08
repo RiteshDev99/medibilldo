@@ -1,22 +1,21 @@
-import Link from "next/link";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
 import { SignupForm } from "@/components/forms/signup-form";
+import { AuthLayout } from "@/components/auth-layout";
 
-export default function SignupPage() {
+export default async function SignupPage() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (session) {
+    redirect("/dashboard");
+  }
+
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10">
-      <div className="flex w-full max-w-sm flex-col gap-6">
-        <Link
-          className="flex items-center gap-2 self-center font-bold text-xl tracking-tight"
-          href="/"
-        >
-          <div className="flex size-8 items-center justify-center rounded-lg bg-black text-white font-extrabold text-sm tracking-tighter shadow-sm">
-            mb
-          </div>
-          medibilldo
-        </Link>
-        <SignupForm />
-      </div>
-    </div>
+    <AuthLayout>
+      <SignupForm />
+    </AuthLayout>
   );
 }
-
