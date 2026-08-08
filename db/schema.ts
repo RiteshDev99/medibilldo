@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { boolean, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { boolean, pgTable, text, timestamp, integer, doublePrecision } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -62,12 +62,32 @@ export const verification = pgTable("verification", {
   ),
 });
 
+export const medicine = pgTable("medicine", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  genericName: text("generic_name").notNull(),
+  category: text("category").notNull(),
+  manufacturer: text("manufacturer").notNull(),
+  hsn: text("hsn"),
+  gst: integer("gst").notNull(), // Percentage, e.g. 5, 12, 18, 28
+  mrp: doublePrecision("mrp").notNull(), // MRP in currency
+  status: text("status").default("ACTIVE").notNull(),
+  createdAt: timestamp("created_at")
+    .$defaultFn(() => new Date())
+    .notNull(),
+  updatedAt: timestamp("updated_at")
+    .$defaultFn(() => new Date())
+    .notNull(),
+});
+
 export type User = typeof user.$inferSelect;
+export type Medicine = typeof medicine.$inferSelect;
 
 export const schema = {
   user,
   session,
   account,
   verification,
+  medicine,
 };
 
