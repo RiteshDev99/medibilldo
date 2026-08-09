@@ -1,5 +1,5 @@
-import { getCurrentUser } from "@/server/users";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
+import { getCurrentUser } from "@/server/users";
 
 export default async function DashboardLayout({
   children,
@@ -10,12 +10,12 @@ export default async function DashboardLayout({
   const user = session.currentUser;
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-zinc-50/50">
-      <DashboardSidebar user={{ name: user.name, email: user.email, role: user.role }} />
-      <main className="flex-1 md:pl-64 min-h-screen">
-        <div className="w-full">
-          {children}
-        </div>
+    <div className="flex min-h-screen flex-col bg-zinc-50/50 md:flex-row">
+      <DashboardSidebar
+        user={{ name: user.name, email: user.email, role: user.role }}
+      />
+      <main className="min-h-screen flex-1 md:pl-64">
+        <div className="w-full">{children}</div>
       </main>
     </div>
   );

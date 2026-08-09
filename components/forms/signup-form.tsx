@@ -1,9 +1,17 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, User, Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
-import Link from "next/link";
+import {
+  ArrowRight,
+  Eye,
+  EyeOff,
+  Loader2,
+  Lock,
+  Mail,
+  User,
+} from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -76,37 +84,45 @@ export function SignupForm({
 
   return (
     <div className={cn("flex flex-col gap-5", className)} {...props}>
-      <div className="flex items-center gap-2 justify-center mb-1 select-none">
+      <div className="mb-1 flex select-none items-center justify-center gap-2">
         <Image
+          alt="MediBilldo Logo"
+          className="size-7 rounded-md object-contain"
+          height={28}
           src="/icon.png"
           width={28}
-          height={28}
-          alt="MediBilldo Logo"
-          className="size-7 object-contain rounded-md"
         />
-        <span className="font-extrabold text-md tracking-tight text-zinc-950">medibilldo</span>
+        <span className="font-extrabold text-md text-zinc-950 tracking-tight">
+          medibilldo
+        </span>
       </div>
 
       {/* Header text */}
       <div className="text-center">
-        <h1 className="text-2xl font-extrabold text-zinc-950 tracking-tight">Create Account</h1>
-        <p className="text-xs text-zinc-500 mt-1">Sign up to access medibilldo workspace</p>
+        <h1 className="font-extrabold text-2xl text-zinc-950 tracking-tight">
+          Create Account
+        </h1>
+        <p className="mt-1 text-xs text-zinc-500">
+          Sign up to access medibilldo workspace
+        </p>
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
           <FormField
             control={form.control}
             name="username"
             render={({ field }) => (
               <FormItem className="space-y-1.5">
-                <FormLabel className="text-zinc-700 font-medium text-xs">Username</FormLabel>
+                <FormLabel className="font-medium text-xs text-zinc-700">
+                  Username
+                </FormLabel>
                 <FormControl>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-zinc-400" />
+                    <User className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-zinc-400" />
                     <Input
+                      className="rounded-lg border-zinc-200 bg-zinc-50/50 pl-9 text-sm focus:border-black"
                       placeholder="username"
-                      className="pl-9 bg-zinc-50/50 border-zinc-200 focus:border-black rounded-lg text-sm"
                       {...field}
                     />
                   </div>
@@ -121,13 +137,15 @@ export function SignupForm({
             name="email"
             render={({ field }) => (
               <FormItem className="space-y-1.5">
-                <FormLabel className="text-zinc-700 font-medium text-xs">Email</FormLabel>
+                <FormLabel className="font-medium text-xs text-zinc-700">
+                  Email
+                </FormLabel>
                 <FormControl>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-zinc-400" />
+                    <Mail className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-zinc-400" />
                     <Input
+                      className="rounded-lg border-zinc-200 bg-zinc-50/50 pl-9 text-sm focus:border-black"
                       placeholder="m@example.com"
-                      className="pl-9 bg-zinc-50/50 border-zinc-200 focus:border-black rounded-lg text-sm"
                       {...field}
                     />
                   </div>
@@ -142,22 +160,28 @@ export function SignupForm({
             name="password"
             render={({ field }) => (
               <FormItem className="space-y-1.5">
-                <FormLabel className="text-zinc-700 font-medium text-xs">Password</FormLabel>
+                <FormLabel className="font-medium text-xs text-zinc-700">
+                  Password
+                </FormLabel>
                 <FormControl>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-zinc-400" />
+                    <Lock className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-zinc-400" />
                     <Input
+                      className="rounded-lg border-zinc-200 bg-zinc-50/50 pr-10 pl-9 text-sm focus:border-black"
                       placeholder="••••••••"
                       type={showPassword ? "text" : "password"}
-                      className="pl-9 pr-10 bg-zinc-50/50 border-zinc-200 focus:border-black rounded-lg text-sm"
                       {...field}
                     />
                     <button
-                      type="button"
+                      className="absolute top-1/2 right-3 -translate-y-1/2 text-zinc-400 transition-colors hover:text-zinc-900"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-900 transition-colors"
+                      type="button"
                     >
-                      {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                      {showPassword ? (
+                        <EyeOff className="size-4" />
+                      ) : (
+                        <Eye className="size-4" />
+                      )}
                     </button>
                   </div>
                 </FormControl>
@@ -171,16 +195,23 @@ export function SignupForm({
             name="role"
             render={({ field }) => (
               <FormItem className="space-y-1.5">
-                <FormLabel className="text-zinc-700 font-medium text-xs">Role</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormLabel className="font-medium text-xs text-zinc-700">
+                  Role
+                </FormLabel>
+                <Select
+                  defaultValue={field.value}
+                  onValueChange={field.onChange}
+                >
                   <FormControl>
-                    <SelectTrigger className="bg-zinc-50/50 border-zinc-200 focus:border-black rounded-lg text-sm">
+                    <SelectTrigger className="rounded-lg border-zinc-200 bg-zinc-50/50 text-sm focus:border-black">
                       <SelectValue placeholder="Select a role" />
                     </SelectTrigger>
                   </FormControl>
-                  <SelectContent className="bg-white border-zinc-200">
+                  <SelectContent className="border-zinc-200 bg-white">
                     <SelectItem value="ADMIN">ADMIN (Store Owner)</SelectItem>
-                    <SelectItem value="STAFF">STAFF (Cashier/Pharmacist)</SelectItem>
+                    <SelectItem value="STAFF">
+                      STAFF (Cashier/Pharmacist)
+                    </SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -189,12 +220,12 @@ export function SignupForm({
           />
 
           <Button
-            type="submit"
+            className="mt-6 flex w-full items-center justify-between rounded-lg bg-zinc-950 px-4 py-6 font-bold text-sm text-white transition-all hover:bg-zinc-900"
             disabled={isLoading}
-            className="w-full bg-zinc-950 hover:bg-zinc-900 text-white font-bold py-6 rounded-lg text-sm flex items-center justify-between px-4 transition-all mt-6"
+            type="submit"
           >
             {isLoading ? (
-              <span className="flex items-center justify-center w-full">
+              <span className="flex w-full items-center justify-center">
                 <Loader2 className="size-4 animate-spin" />
               </span>
             ) : (
@@ -208,23 +239,33 @@ export function SignupForm({
       </Form>
 
       {/* Bottom link */}
-      <div className="text-center text-xs text-zinc-500 mt-2">
+      <div className="mt-2 text-center text-xs text-zinc-500">
         Already have an account?{" "}
-        <Link className="font-extrabold text-zinc-950 underline underline-offset-4" href="/login">
+        <Link
+          className="font-extrabold text-zinc-950 underline underline-offset-4"
+          href="/login"
+        >
           Login
         </Link>
       </div>
 
       {/* Legal terms footer */}
-      <div className="text-center text-[10px] leading-relaxed text-zinc-400 px-4 mt-1">
+      <div className="mt-1 px-4 text-center text-[10px] text-zinc-400 leading-relaxed">
         By clicking continue, you agree to our{" "}
-        <Link href="#" className="underline hover:text-zinc-600 transition-colors">
+        <Link
+          className="underline transition-colors hover:text-zinc-600"
+          href="#"
+        >
           Terms of Service
         </Link>{" "}
         and{" "}
-        <Link href="#" className="underline hover:text-zinc-600 transition-colors">
+        <Link
+          className="underline transition-colors hover:text-zinc-600"
+          href="#"
+        >
           Privacy Policy
-        </Link>.
+        </Link>
+        .
       </div>
     </div>
   );

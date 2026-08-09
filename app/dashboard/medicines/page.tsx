@@ -6,7 +6,7 @@ export default async function MedicinesPage() {
   const session = await getCurrentUser();
   const user = session.currentUser;
   const res = await getMedicines();
-  const medicines = res.success ? (res.data || []) : [];
+  const medicines = res.success ? res.data || [] : [];
 
   return (
     <MedicinesClient

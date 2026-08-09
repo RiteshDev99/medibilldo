@@ -10,16 +10,21 @@ export default function ResetPasswordPage() {
           className="flex items-center gap-2 self-center font-bold text-xl tracking-tight"
           href="/"
         >
-          <div className="flex size-8 items-center justify-center rounded-lg bg-black text-white font-extrabold text-sm tracking-tighter shadow-sm">
+          <div className="flex size-8 items-center justify-center rounded-lg bg-black font-extrabold text-sm text-white tracking-tighter shadow-sm">
             mb
           </div>
           medibilldo
         </Link>
-        <Suspense fallback={<div className="text-center py-4 text-sm text-muted-foreground">Loading...</div>}>
+        <Suspense
+          fallback={
+            <div className="py-4 text-center text-muted-foreground text-sm">
+              Loading...
+            </div>
+          }
+        >
           <ResetPasswordForm />
         </Suspense>
       </div>
     </div>
   );
 }
-

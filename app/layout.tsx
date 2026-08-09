@@ -20,9 +20,9 @@ export default function RootLayout({
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
-          forcedTheme="light"
-          enableSystem={false}
           disableTransitionOnChange
+          enableSystem={false}
+          forcedTheme="light"
         >
           {children}
           <Toaster />
@@ -31,4 +31,3 @@ export default function RootLayout({
     </html>
   );
 }
-

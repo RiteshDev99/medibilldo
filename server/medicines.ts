@@ -1,10 +1,10 @@
 "use server";
 
+import { desc, eq } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
 import { db } from "@/db/drizzle";
 import { medicine } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
 import { getCurrentUser } from "./users";
-import { revalidatePath } from "next/cache";
 
 export async function getMedicines() {
   try {

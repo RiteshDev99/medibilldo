@@ -1,8 +1,8 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { LoginForm } from "@/components/forms/login-form";
 import { AuthLayout } from "@/components/auth-layout";
+import { LoginForm } from "@/components/forms/login-form";
+import { auth } from "@/lib/auth";
 
 export default async function LoginPage() {
   const session = await auth.api.getSession({

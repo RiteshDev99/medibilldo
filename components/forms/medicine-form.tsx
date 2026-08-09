@@ -1,9 +1,9 @@
 "use client";
 
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { Loader2 } from "lucide-react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -64,16 +64,22 @@ export function MedicineForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-2">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <form className="space-y-4 pt-2" onSubmit={form.handleSubmit(onSubmit)}>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <FormField
             control={form.control}
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-zinc-700 font-medium">Medicine Name</FormLabel>
+                <FormLabel className="font-medium text-zinc-700">
+                  Medicine Name
+                </FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g. Paracetamol 500mg" className="border-zinc-200 focus:border-black" {...field} />
+                  <Input
+                    className="border-zinc-200 focus:border-black"
+                    placeholder="e.g. Paracetamol 500mg"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -85,9 +91,15 @@ export function MedicineForm({
             name="genericName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-zinc-700 font-medium">Generic / Formula Name</FormLabel>
+                <FormLabel className="font-medium text-zinc-700">
+                  Generic / Formula Name
+                </FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g. Acetaminophen" className="border-zinc-200 focus:border-black" {...field} />
+                  <Input
+                    className="border-zinc-200 focus:border-black"
+                    placeholder="e.g. Acetaminophen"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -95,15 +107,21 @@ export function MedicineForm({
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <FormField
             control={form.control}
             name="category"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-zinc-700 font-medium">Category</FormLabel>
+                <FormLabel className="font-medium text-zinc-700">
+                  Category
+                </FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g. Tablets, Syrup, Injection" className="border-zinc-200 focus:border-black" {...field} />
+                  <Input
+                    className="border-zinc-200 focus:border-black"
+                    placeholder="e.g. Tablets, Syrup, Injection"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -115,9 +133,15 @@ export function MedicineForm({
             name="manufacturer"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-zinc-700 font-medium">Manufacturer</FormLabel>
+                <FormLabel className="font-medium text-zinc-700">
+                  Manufacturer
+                </FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g. Cipla, Sun Pharma" className="border-zinc-200 focus:border-black" {...field} />
+                  <Input
+                    className="border-zinc-200 focus:border-black"
+                    placeholder="e.g. Cipla, Sun Pharma"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -125,15 +149,21 @@ export function MedicineForm({
           />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <FormField
             control={form.control}
             name="hsn"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-zinc-700 font-medium">HSN Code</FormLabel>
+                <FormLabel className="font-medium text-zinc-700">
+                  HSN Code
+                </FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g. 3004" className="border-zinc-200 focus:border-black" {...field} />
+                  <Input
+                    className="border-zinc-200 focus:border-black"
+                    placeholder="e.g. 3004"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -145,14 +175,20 @@ export function MedicineForm({
             name="gst"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-zinc-700 font-medium">GST (%)</FormLabel>
+                <FormLabel className="font-medium text-zinc-700">
+                  GST (%)
+                </FormLabel>
                 <FormControl>
                   <Input
-                    type="number"
-                    placeholder="18"
                     className="border-zinc-200 focus:border-black"
+                    placeholder="18"
+                    type="number"
                     {...field}
-                    onChange={(e) => field.onChange(e.target.value === "" ? "" : Number(e.target.value))}
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value === "" ? "" : Number(e.target.value)
+                      )
+                    }
                   />
                 </FormControl>
                 <FormMessage />
@@ -165,15 +201,21 @@ export function MedicineForm({
             name="mrp"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-zinc-700 font-medium">MRP (₹)</FormLabel>
+                <FormLabel className="font-medium text-zinc-700">
+                  MRP (₹)
+                </FormLabel>
                 <FormControl>
                   <Input
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
                     className="border-zinc-200 focus:border-black"
+                    placeholder="0.00"
+                    step="0.01"
+                    type="number"
                     {...field}
-                    onChange={(e) => field.onChange(e.target.value === "" ? "" : Number(e.target.value))}
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value === "" ? "" : Number(e.target.value)
+                      )
+                    }
                   />
                 </FormControl>
                 <FormMessage />
@@ -187,14 +229,16 @@ export function MedicineForm({
           name="status"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-zinc-700 font-medium">Status</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <FormLabel className="font-medium text-zinc-700">
+                Status
+              </FormLabel>
+              <Select defaultValue={field.value} onValueChange={field.onChange}>
                 <FormControl>
-                  <SelectTrigger className="border-zinc-200 focus:border-black bg-white">
+                  <SelectTrigger className="border-zinc-200 bg-white focus:border-black">
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent className="bg-white border-zinc-200">
+                <SelectContent className="border-zinc-200 bg-white">
                   <SelectItem value="ACTIVE">Active</SelectItem>
                   <SelectItem value="INACTIVE">Inactive</SelectItem>
                 </SelectContent>
@@ -204,11 +248,11 @@ export function MedicineForm({
           )}
         />
 
-        <div className="flex justify-end gap-2 pt-4 border-t border-zinc-100">
+        <div className="flex justify-end gap-2 border-zinc-100 border-t pt-4">
           <Button
-            type="submit"
+            className="bg-black px-6 font-medium text-white transition-colors hover:bg-zinc-800"
             disabled={isLoading}
-            className="bg-black text-white hover:bg-zinc-800 transition-colors font-medium px-6"
+            type="submit"
           >
             {isLoading ? (
               <>

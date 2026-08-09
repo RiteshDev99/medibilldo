@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, User, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Loader2, Lock, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -58,39 +58,49 @@ export function LoginForm({
   }
 
   const handleGoogleSignIn = () => {
-    toast.error("Google Sign-In is not configured. Please use your email & password.");
+    toast.error(
+      "Google Sign-In is not configured. Please use your email & password."
+    );
   };
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       {/* Brand header */}
-      <div className="flex items-center gap-2 justify-center mb-1 select-none">
-        <div className="size-7 flex items-center justify-center rounded-md bg-black text-white font-extrabold text-xs tracking-tighter shadow-sm">
+      <div className="mb-1 flex select-none items-center justify-center gap-2">
+        <div className="flex size-7 items-center justify-center rounded-md bg-black font-extrabold text-white text-xs tracking-tighter shadow-sm">
           mb
         </div>
-        <span className="font-extrabold text-md tracking-tight text-zinc-950">medibilldo</span>
+        <span className="font-extrabold text-md text-zinc-950 tracking-tight">
+          medibilldo
+        </span>
       </div>
 
       {/* Header text */}
       <div className="text-center">
-        <h1 className="text-2xl font-extrabold text-zinc-950 tracking-tight">Welcome back</h1>
-        <p className="text-xs text-zinc-500 mt-1">Login with your email and password</p>
+        <h1 className="font-extrabold text-2xl text-zinc-950 tracking-tight">
+          Welcome back
+        </h1>
+        <p className="mt-1 text-xs text-zinc-500">
+          Login with your email and password
+        </p>
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
           <FormField
             control={form.control}
             name="email"
             render={({ field }) => (
               <FormItem className="space-y-1.5">
-                <FormLabel className="text-zinc-700 font-medium text-xs">Email</FormLabel>
+                <FormLabel className="font-medium text-xs text-zinc-700">
+                  Email
+                </FormLabel>
                 <FormControl>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-zinc-400" />
+                    <User className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-zinc-400" />
                     <Input
+                      className="rounded-lg border-zinc-200 bg-zinc-50/50 pl-9 text-sm focus:border-black"
                       placeholder="m@example.com"
-                      className="pl-9 bg-zinc-50/50 border-zinc-200 focus:border-black rounded-lg text-sm"
                       {...field}
                     />
                   </div>
@@ -106,9 +116,11 @@ export function LoginForm({
             render={({ field }) => (
               <FormItem className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <FormLabel className="text-zinc-700 font-medium text-xs">Password</FormLabel>
+                  <FormLabel className="font-medium text-xs text-zinc-700">
+                    Password
+                  </FormLabel>
                   <Link
-                    className="text-[11px] font-semibold text-zinc-950 hover:underline"
+                    className="font-semibold text-[11px] text-zinc-950 hover:underline"
                     href="/forgot-password"
                   >
                     Forgot your password?
@@ -116,19 +128,23 @@ export function LoginForm({
                 </div>
                 <FormControl>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-zinc-400" />
+                    <Lock className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-zinc-400" />
                     <Input
+                      className="rounded-lg border-zinc-200 bg-zinc-50/50 pr-10 pl-9 text-sm focus:border-black"
                       placeholder="••••••••"
                       type={showPassword ? "text" : "password"}
-                      className="pl-9 pr-10 bg-zinc-50/50 border-zinc-200 focus:border-black rounded-lg text-sm"
                       {...field}
                     />
                     <button
-                      type="button"
+                      className="absolute top-1/2 right-3 -translate-y-1/2 text-zinc-400 transition-colors hover:text-zinc-900"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-900 transition-colors"
+                      type="button"
                     >
-                      {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                      {showPassword ? (
+                        <EyeOff className="size-4" />
+                      ) : (
+                        <Eye className="size-4" />
+                      )}
                     </button>
                   </div>
                 </FormControl>
@@ -138,12 +154,12 @@ export function LoginForm({
           />
 
           <Button
-            type="submit"
+            className="mt-6 flex w-full items-center justify-between rounded-lg bg-zinc-950 px-4 py-6 font-bold text-sm text-white transition-all hover:bg-zinc-900"
             disabled={isLoading}
-            className="w-full bg-zinc-950 hover:bg-zinc-900 text-white font-bold py-6 rounded-lg text-sm flex items-center justify-between px-4 transition-all mt-6"
+            type="submit"
           >
             {isLoading ? (
-              <span className="flex items-center justify-center w-full">
+              <span className="flex w-full items-center justify-center">
                 <Loader2 className="size-4 animate-spin" />
               </span>
             ) : (
@@ -159,20 +175,22 @@ export function LoginForm({
       {/* OR divider */}
       <div className="relative my-1">
         <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t border-zinc-200" />
+          <span className="w-full border-zinc-200 border-t" />
         </div>
         <div className="relative flex justify-center text-[10px] uppercase">
-          <span className="bg-white px-3 text-zinc-400 font-bold tracking-wider">OR</span>
+          <span className="bg-white px-3 font-bold text-zinc-400 tracking-wider">
+            OR
+          </span>
         </div>
       </div>
 
       {/* Social login */}
       <Button
+        className="flex w-full items-center justify-center gap-2 rounded-lg border-zinc-200 py-5 font-semibold text-sm transition-all hover:bg-zinc-50"
         onClick={handleGoogleSignIn}
         variant="outline"
-        className="w-full border-zinc-200 hover:bg-zinc-50 font-semibold py-5 flex items-center justify-center gap-2 rounded-lg text-sm transition-all"
       >
-        <svg className="size-4 mr-1 shrink-0" viewBox="0 0 24 24" fill="none">
+        <svg className="mr-1 size-4 shrink-0" fill="none" viewBox="0 0 24 24">
           <path
             d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
             fill="#4285F4"
@@ -196,21 +214,31 @@ export function LoginForm({
       {/* Bottom link */}
       <div className="text-center text-xs text-zinc-500">
         Don&apos;t have an account?{" "}
-        <Link className="font-extrabold text-zinc-950 underline underline-offset-4" href="/signup">
+        <Link
+          className="font-extrabold text-zinc-950 underline underline-offset-4"
+          href="/signup"
+        >
           Sign up
         </Link>
       </div>
 
       {/* Legal terms footer */}
-      <div className="text-center text-[10px] leading-relaxed text-zinc-400 px-4">
+      <div className="px-4 text-center text-[10px] text-zinc-400 leading-relaxed">
         By clicking continue, you agree to our{" "}
-        <Link href="#" className="underline hover:text-zinc-600 transition-colors">
+        <Link
+          className="underline transition-colors hover:text-zinc-600"
+          href="#"
+        >
           Terms of Service
         </Link>{" "}
         and{" "}
-        <Link href="#" className="underline hover:text-zinc-600 transition-colors">
+        <Link
+          className="underline transition-colors hover:text-zinc-600"
+          href="#"
+        >
           Privacy Policy
-        </Link>.
+        </Link>
+        .
       </div>
     </div>
   );

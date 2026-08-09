@@ -51,9 +51,5 @@ export const auth = betterAuth({
     provider: "pg",
     schema,
   }),
-  plugins: [
-    lastLoginMethod(),
-    nextCookies(),
-  ],
+  plugins: [lastLoginMethod(), nextCookies()],
 });
-
