@@ -16,6 +16,7 @@ export const user = pgTable("user", {
     .notNull(),
   image: text("image"),
   role: text("role").default("STAFF").notNull(),
+  storeId: text("store_id"),
   createdAt: timestamp("created_at")
     .$defaultFn(() => /* @__PURE__ */ new Date())
     .notNull(),
@@ -89,10 +90,41 @@ export const medicine = pgTable("medicine", {
 export type User = typeof user.$inferSelect;
 export type Medicine = typeof medicine.$inferSelect;
 
+export const store = pgTable("store", {
+  id: text("id").primaryKey(),
+  ownerId: text("owner_id")
+    .notNull()
+    .unique()
+    .references(() => user.id, { onDelete: "cascade" }),
+  storeName: text("store_name").notNull(),
+  legalName: text("legal_name"),
+  ownerName: text("owner_name"),
+  phone: text("phone").notNull(),
+  alternatePhone: text("alternate_phone"),
+  email: text("email"),
+  address: text("address").notNull(),
+  city: text("city").notNull(),
+  state: text("state").notNull(),
+  pincode: text("pincode").notNull(),
+  gstNumber: text("gst_number"),
+  drugLicenseNumber: text("drug_license_number"),
+  pharmacyLicenseNumber: text("pharmacy_license_number"),
+  logo: text("logo"),
+  createdAt: timestamp("created_at")
+    .$defaultFn(() => new Date())
+    .notNull(),
+  updatedAt: timestamp("updated_at")
+    .$defaultFn(() => new Date())
+    .notNull(),
+});
+
+export type Store = typeof store.$inferSelect;
+
 export const schema = {
   user,
   session,
   account,
   verification,
   medicine,
+  store,
 };
