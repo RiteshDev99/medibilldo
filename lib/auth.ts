@@ -45,6 +45,10 @@ export const auth = betterAuth({
         defaultValue: "STAFF",
         input: true,
       },
+      storeId: {
+        type: "string",
+        input: false,
+      },
     },
   },
   database: drizzleAdapter(db, {
