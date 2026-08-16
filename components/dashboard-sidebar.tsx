@@ -32,9 +32,10 @@ interface SidebarProps {
     email: string;
     role: string;
   };
+  storeName?: string;
 }
 
-export function DashboardSidebar({ user }: SidebarProps) {
+export function DashboardSidebar({ user, storeName }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
@@ -73,16 +74,21 @@ export function DashboardSidebar({ user }: SidebarProps) {
   const SidebarContent = () => (
     <div className="flex h-full select-none flex-col bg-white text-zinc-900">
 
-      {/* <div className="flex items-center justify-between border-zinc-150 border-b p-5">
-        <div className="flex flex-1 items-center justify-start">
-          <Image
-            alt="MediBilldo Logo"
-            className="h-11 w-auto object-contain transition-transform duration-200 hover:scale-105"
-            height={48}
-            priority
-            src="/mascot.png"
-            width={160}
-          />
+      <div className="flex items-center justify-between border-zinc-150 border-b p-5">
+        <div className="flex flex-col min-w-0">
+          <div className="flex items-center gap-2">
+            <div className="flex size-7 items-center justify-center rounded-lg bg-black font-extrabold text-xs text-white tracking-tighter">
+              mb
+            </div>
+            <span className="font-extrabold text-md tracking-tight">
+              MediBilldo
+            </span>
+          </div>
+          {/* {storeName && (
+            <span className="mt-1.5 font-bold text-xs text-zinc-500 truncate">
+              {storeName}
+            </span>
+          )} */}
         </div>
     
         <button
@@ -91,7 +97,7 @@ export function DashboardSidebar({ user }: SidebarProps) {
         >
           <X className="size-5" />
         </button>
-      </div> */}
+      </div>
 
       {/* Prominent Action Button: + NEW BILL */}
       <div className="px-4 py-6">
@@ -170,15 +176,15 @@ export function DashboardSidebar({ user }: SidebarProps) {
 
       {/* Mobile Top Bar */}
       <div className="sticky top-0 z-40 flex items-center justify-between border-zinc-150 border-b bg-white px-4 py-3 text-zinc-950 md:hidden">
-        <div className="flex items-center">
-          <Image
-            alt="MediBilldo Logo"
-            className="h-9 w-auto object-contain"
-            height={36}
-            priority
-            src="/mascot.png"
-            width={130}
-          />
+        <div className="flex flex-col min-w-0">
+          <span className="font-extrabold text-sm tracking-tight">
+            MediBilldo
+          </span>
+          {storeName && (
+            <span className="font-bold text-[10px] text-zinc-500 truncate max-w-[180px]">
+              {storeName}
+            </span>
+          )}
         </div>
         <button
           className="rounded-lg border border-zinc-200 bg-zinc-50 p-1.5 text-zinc-600 transition-colors hover:text-zinc-950"
