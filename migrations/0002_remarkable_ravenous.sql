@@ -1,0 +1,1 @@
+ALTER TABLE "audit" ADD COLUMN "admin_user_id" text;

@@ -93,7 +93,6 @@ export type Medicine = typeof medicine.$inferSelect;
 export const store = pgTable("store", {
   id: text("id").primaryKey(),
   ownerId: text("owner_id")
-    .notNull()
     .unique()
     .references(() => user.id, { onDelete: "cascade" }),
   storeName: text("store_name").notNull(),
@@ -110,6 +109,7 @@ export const store = pgTable("store", {
   drugLicenseNumber: text("drug_license_number"),
   pharmacyLicenseNumber: text("pharmacy_license_number"),
   logo: text("logo"),
+  status: text("status").default("ACTIVE").notNull(),
   createdAt: timestamp("created_at")
     .$defaultFn(() => new Date())
     .notNull(),
@@ -120,6 +120,20 @@ export const store = pgTable("store", {
 
 export type Store = typeof store.$inferSelect;
 
+export const audit = pgTable("audit", {
+  id: text("id").primaryKey(),
+  action: text("action").notNull(),
+  storeId: text("store_id").notNull(),
+  storeName: text("store_name").notNull(),
+  performedBy: text("performed_by").notNull(),
+  adminUserId: text("admin_user_id"),
+  createdAt: timestamp("created_at")
+    .$defaultFn(() => new Date())
+    .notNull(),
+});
+
+export type Audit = typeof audit.$inferSelect;
+
 export const schema = {
   user,
   session,
@@ -127,4 +141,5 @@ export const schema = {
   verification,
   medicine,
   store,
+  audit,
 };
