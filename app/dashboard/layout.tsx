@@ -15,6 +15,22 @@ export default async function DashboardLayout({
   const isAdmin = user.role === "ADMIN";
   const hasNoStore = currentStore === null;
 
+  if (user.role !== "SUPER_ADMIN" && currentStore?.status === "INACTIVE") {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50/50 p-6 text-zinc-950">
+        <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-8 text-center shadow-xs">
+          <h1 className="font-extrabold text-2xl text-red-650 tracking-tight">Store Inactive</h1>
+          <p className="mt-4 text-sm text-zinc-500 leading-relaxed">
+            This store is currently inactive.
+          </p>
+          <p className="mt-2 text-sm text-zinc-500 leading-relaxed">
+            Please contact the platform administrator to restore access.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen flex-col bg-zinc-50/50 md:flex-row">
       <DashboardSidebar

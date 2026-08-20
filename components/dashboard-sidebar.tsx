@@ -3,6 +3,7 @@
 import {
   BarChart3,
   Briefcase,
+  Building2,
   Coins,
   Home,
   LogOut,
@@ -64,7 +65,16 @@ export function DashboardSidebar({ user, storeName }: SidebarProps) {
     { name: "Medicines", href: "/dashboard/medicines", icon: Pill },
   ];
 
-  const links = isAdmin ? adminLinks : staffLinks;
+  const superAdminLinks = [
+    { name: "Dashboard", href: "/super-admin", icon: Home },
+    { name: "Stores", href: "/super-admin/stores", icon: Building2 },
+  ];
+
+  const links = user.role === "SUPER_ADMIN"
+    ? superAdminLinks
+    : isAdmin
+      ? adminLinks
+      : staffLinks;
 
   const handleLogout = async () => {
     await authClient.signOut();

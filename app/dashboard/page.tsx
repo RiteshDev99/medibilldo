@@ -18,11 +18,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/server/users";
 
 export default async function DashboardPage() {
   const session = await getCurrentUser();
   const user = session.currentUser;
+  
+  if (user.role === "SUPER_ADMIN") {
+    redirect("/super-admin");
+  }
+
   const isAdmin = user.role === "ADMIN";
 
   return (
@@ -82,7 +88,33 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {isAdmin ? (
+      {user.role === "SUPER_ADMIN" ? (
+        // ==========================================
+        // SUPER_ADMIN DASHBOARD
+        // ==========================================
+        <div className="fade-in animate-in space-y-6 duration-300">
+          <Card className="border-zinc-200 bg-white shadow-xs">
+            <CardHeader>
+              <CardTitle className="font-extrabold text-base tracking-tight">
+                Super Admin Control Panel
+              </CardTitle>
+              <CardDescription>
+                System-wide metrics and multi-store control console.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-xl border border-zinc-200 border-dashed bg-white p-12 text-center">
+                <p className="font-semibold text-sm text-zinc-800">
+                  Super Admin Management features are under construction.
+                </p>
+                <p className="mt-1 text-xs text-zinc-500">
+                  You are logged in as SUPER_ADMIN. Multi-store management and system preferences will be available soon.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      ) : isAdmin ? (
         // ==========================================
         // ADMIN DASHBOARD
         // ==========================================
