@@ -56,17 +56,7 @@ export const signIn = async (email: string, password: string) => {
 
 
 
-export const getAllUsers = async () => {
-  try {
-    const users = await db.query.user.findMany({
-      orderBy: (user, { desc }) => [desc(user.createdAt)],
-    });
-    return users;
-  } catch (error) {
-    console.error(error);
-    return [];
-  }
-};
+
 
 export const createStaff = async (data: { name: string; email: string; phone?: string; password?: string }) => {
   try {

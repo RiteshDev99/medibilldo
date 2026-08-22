@@ -4,6 +4,7 @@ import { nextCookies } from "better-auth/next-js";
 import { lastLoginMethod } from "better-auth/plugins";
 import { Resend } from "resend";
 import ForgotPasswordEmail from "@/components/emails/reset-password";
+import "@/lib/env";
 import { db } from "@/db/drizzle";
 import { schema } from "@/db/schema";
 

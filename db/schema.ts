@@ -5,6 +5,7 @@ import {
   pgTable,
   text,
   timestamp,
+  index,
 } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
@@ -23,7 +24,9 @@ export const user = pgTable("user", {
   updatedAt: timestamp("updated_at")
     .$defaultFn(() => /* @__PURE__ */ new Date())
     .notNull(),
-});
+}, (table) => [
+  index("user_store_id_idx").on(table.storeId),
+]);
 
 export const session = pgTable("session", {
   id: text("id").primaryKey(),
@@ -94,7 +97,7 @@ export const store = pgTable("store", {
   id: text("id").primaryKey(),
   ownerId: text("owner_id")
     .unique()
-    .references(() => user.id, { onDelete: "cascade" }),
+    .references(() => user.id, { onDelete: "set null" }),
   storeName: text("store_name").notNull(),
   legalName: text("legal_name"),
   ownerName: text("owner_name"),
@@ -116,7 +119,9 @@ export const store = pgTable("store", {
   updatedAt: timestamp("updated_at")
     .$defaultFn(() => new Date())
     .notNull(),
-});
+}, (table) => [
+  index("store_owner_id_idx").on(table.ownerId),
+]);
 
 export type Store = typeof store.$inferSelect;
 
