@@ -41,7 +41,7 @@ const formSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
-  role: z.enum(["ADMIN", "STAFF"]),
+  role: z.enum(["SUPER_ADMIN", "ADMIN", "STAFF"]),
 });
 
 export function SignupForm({
@@ -208,6 +208,9 @@ export function SignupForm({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent className="border-zinc-200 bg-white">
+                    <SelectItem value="SUPER_ADMIN">
+                      SUPER_ADMIN (Platform Owner)
+                    </SelectItem>
                     <SelectItem value="ADMIN">ADMIN (Store Owner)</SelectItem>
                     <SelectItem value="STAFF">
                       STAFF (Cashier/Pharmacist)
