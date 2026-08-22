@@ -211,16 +211,7 @@ export function LoginForm({
         <span>Continue with Google</span>
       </Button>
 
-      {/* Bottom link */}
-      <div className="text-center text-xs text-zinc-500">
-        Don&apos;t have an account?{" "}
-        <Link
-          className="font-extrabold text-zinc-950 underline underline-offset-4"
-          href="/signup"
-        >
-          Sign up
-        </Link>
-      </div>
+
 
       {/* Legal terms footer */}
       <div className="px-4 text-center text-[10px] text-zinc-400 leading-relaxed">

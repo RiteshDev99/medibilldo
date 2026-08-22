@@ -12,6 +12,7 @@ const resend = new Resend(process.env.RESEND_API_KEY as string);
 export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
+    autoSignIn: false,
     sendResetPassword: async ({ user, url }) => {
       console.log("\n--- [DEVELOPMENT TOOL] PASSWORD RESET LINK ---");
       console.log(`To: ${user.email}`);

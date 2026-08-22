@@ -97,12 +97,7 @@ export function ForgotPasswordForm({
                   )}
                 </Button>
               </div>
-              <div className="text-center text-sm">
-                Don&apos;t have an account?{" "}
-                <Link className="underline underline-offset-4" href="/signup">
-                  Sign up
-                </Link>
-              </div>
+
             </form>
           </Form>
         </CardContent>
