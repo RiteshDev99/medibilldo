@@ -1,14 +1,15 @@
 "use server";
 
 import { eq } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
 import { db } from "@/db/drizzle";
 import { user } from "@/db/schema";
 import { auth } from "@/lib/auth";
 
 export const getCurrentUser = async () => {
+
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -54,25 +55,35 @@ export const signIn = async (email: string, password: string) => {
   }
 };
 
-
-
-
-
-export const createStaff = async (data: { name: string; email: string; phone?: string; password?: string }) => {
+export const createStaff = async (data: {
+  name: string;
+  email: string;
+  phone?: string;
+  password?: string;
+}) => {
   try {
     const session = await getCurrentUser();
     const currentUser = session.currentUser;
 
     if (currentUser.role !== "ADMIN") {
-      return { success: false, error: "Access denied. Store Admin role required." };
+      return {
+        success: false,
+        error: "Access denied. Store Admin role required.",
+      };
     }
 
     if (!currentUser.storeId) {
-      return { success: false, error: "Store Admin does not have an assigned store." };
+      return {
+        success: false,
+        error: "Store Admin does not have an assigned store.",
+      };
     }
 
-    if (!data.name || !data.email || !data.password) {
-      return { success: false, error: "Name, email, and password are required." };
+    if (!(data.name && data.email && data.password)) {
+      return {
+        success: false,
+        error: "Name, email, and password are required.",
+      };
     }
 
     // Check email uniqueness
@@ -94,7 +105,7 @@ export const createStaff = async (data: { name: string; email: string; phone?: s
       },
     });
 
-    if (!newUser || !newUser.user) {
+    if (!(newUser && newUser.user)) {
       return { success: false, error: "Failed to create Staff user." };
     }
 
@@ -109,6 +120,9 @@ export const createStaff = async (data: { name: string; email: string; phone?: s
   } catch (error) {
     console.error("Error in createStaff:", error);
     const err = error as Error;
-    return { success: false, error: err.message || "Failed to create staff member." };
+    return {
+      success: false,
+      error: err.message || "Failed to create staff member.",
+    };
   }
 };

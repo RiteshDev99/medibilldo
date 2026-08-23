@@ -97,7 +97,6 @@ export function ForgotPasswordForm({
                   )}
                 </Button>
               </div>
-
             </form>
           </Form>
         </CardContent>

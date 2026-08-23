@@ -126,7 +126,6 @@ export function ResetPasswordForm({
                   )}
                 </Button>
               </div>
-
             </form>
           </Form>
         </CardContent>

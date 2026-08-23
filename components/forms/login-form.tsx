@@ -211,8 +211,6 @@ export function LoginForm({
         <span>Continue with Google</span>
       </Button>
 
-
-
       {/* Legal terms footer */}
       <div className="px-4 text-center text-[10px] text-zinc-400 leading-relaxed">
         By clicking continue, you agree to our{" "}
