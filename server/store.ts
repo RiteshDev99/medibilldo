@@ -3,11 +3,11 @@
 import { desc, eq, ilike, or } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db/drizzle";
-import { store, user as userTable, audit } from "@/db/schema";
-import { getCurrentUser } from "@/server/users";
-import { requireSuperAdmin } from "@/server/permissions";
-import { storeSchema } from "@/lib/schemas/store";
+import { audit, store, user as userTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
+import { storeSchema } from "@/lib/schemas/store";
+import { requireSuperAdmin } from "@/server/permissions";
+import { getCurrentUser } from "@/server/users";
 
 export async function getCurrentStore() {
   try {
@@ -27,15 +27,14 @@ export async function getCurrentStore() {
         where: eq(store.ownerId, currentUser.id),
       });
       return s || null;
-    } else {
-      if (!currentUser.storeId) {
-        return null;
-      }
-      const s = await db.query.store.findFirst({
-        where: eq(store.id, currentUser.storeId),
-      });
-      return s || null;
     }
+    if (!currentUser.storeId) {
+      return null;
+    }
+    const s = await db.query.store.findFirst({
+      where: eq(store.id, currentUser.storeId),
+    });
+    return s || null;
   } catch (error) {
     console.error("Error in getCurrentStore:", error);
     return null;
@@ -55,7 +54,9 @@ export async function createStore(rawData: unknown) {
     if (!parseResult.success) {
       return {
         success: false,
-        error: "Validation failed: " + parseResult.error.issues.map((issue) => issue.message).join(", "),
+        error:
+          "Validation failed: " +
+          parseResult.error.issues.map((issue) => issue.message).join(", "),
       };
     }
 
@@ -83,7 +84,12 @@ export async function createStore(rawData: unknown) {
         logo: data.logo || null,
       });
 
-      await logAudit("Store Created", storeId, data.storeName, currentUser.name);
+      await logAudit(
+        "Store Created",
+        storeId,
+        data.storeName,
+        currentUser.name
+      );
 
       revalidatePath("/dashboard");
       return { success: true, storeId };
@@ -144,7 +150,9 @@ export async function updateStore(rawData: unknown) {
     if (!parseResult.success) {
       return {
         success: false,
-        error: "Validation failed: " + parseResult.error.issues.map((issue) => issue.message).join(", "),
+        error:
+          "Validation failed: " +
+          parseResult.error.issues.map((issue) => issue.message).join(", "),
       };
     }
 
@@ -156,7 +164,10 @@ export async function updateStore(rawData: unknown) {
     });
 
     if (!existingStore) {
-      return { success: false, error: "Store not found or you do not have permission to edit." };
+      return {
+        success: false,
+        error: "Store not found or you do not have permission to edit.",
+      };
     }
 
     await db
@@ -188,7 +199,13 @@ export async function updateStore(rawData: unknown) {
   }
 }
 
-async function logAudit(action: string, storeId: string, storeName: string, performedBy: string, adminUserId?: string) {
+async function logAudit(
+  action: string,
+  storeId: string,
+  storeName: string,
+  performedBy: string,
+  adminUserId?: string
+) {
   try {
     await db.insert(audit).values({
       id: crypto.randomUUID(),
@@ -207,7 +224,7 @@ export async function getAllStores(searchQuery?: string) {
   try {
     await requireSuperAdmin();
 
-    let whereClause = undefined;
+    let whereClause;
     if (searchQuery) {
       whereClause = or(
         ilike(store.storeName, `%${searchQuery}%`),
@@ -256,7 +273,10 @@ export async function getStoreDetails(storeId: string) {
   }
 }
 
-export async function updateStoreStatus(storeId: string, status: "ACTIVE" | "INACTIVE") {
+export async function updateStoreStatus(
+  storeId: string,
+  status: "ACTIVE" | "INACTIVE"
+) {
   try {
     const session = await requireSuperAdmin();
     const currentUser = session.currentUser;
@@ -277,7 +297,8 @@ export async function updateStoreStatus(storeId: string, status: "ACTIVE" | "INA
       })
       .where(eq(store.id, storeId));
 
-    const actionText = status === "ACTIVE" ? "Store Activated" : "Store Deactivated";
+    const actionText =
+      status === "ACTIVE" ? "Store Activated" : "Store Deactivated";
     await logAudit(actionText, storeId, data.storeName, currentUser.name);
 
     revalidatePath("/super-admin");
@@ -314,8 +335,11 @@ export async function createStoreAdminAccess(
     const session = await requireSuperAdmin();
     const currentUser = session.currentUser;
 
-    if (!data.name || !data.email || !data.password) {
-      return { success: false, error: "Name, email, and password are required." };
+    if (!(data.name && data.email && data.password)) {
+      return {
+        success: false,
+        error: "Name, email, and password are required.",
+      };
     }
 
     // Check store
@@ -328,11 +352,17 @@ export async function createStoreAdminAccess(
     }
 
     if (existingStore.status !== "ACTIVE") {
-      return { success: false, error: "This store is currently inactive. Please activate it first." };
+      return {
+        success: false,
+        error: "This store is currently inactive. Please activate it first.",
+      };
     }
 
     if (existingStore.ownerId) {
-      return { success: false, error: "This store already has an Admin assigned." };
+      return {
+        success: false,
+        error: "This store already has an Admin assigned.",
+      };
     }
 
     // Check email uniqueness
@@ -354,7 +384,7 @@ export async function createStoreAdminAccess(
       },
     });
 
-    if (!newUser || !newUser.user) {
+    if (!(newUser && newUser.user)) {
       return { success: false, error: "Failed to create Admin user." };
     }
 
@@ -373,7 +403,13 @@ export async function createStoreAdminAccess(
       .where(eq(store.id, storeId));
 
     // Log audit
-    await logAudit("STORE_ADMIN_CREATED", storeId, existingStore.storeName, currentUser.name, adminUserId);
+    await logAudit(
+      "STORE_ADMIN_CREATED",
+      storeId,
+      existingStore.storeName,
+      currentUser.name,
+      adminUserId
+    );
 
     revalidatePath("/super-admin");
     revalidatePath(`/super-admin/stores/${storeId}`);
@@ -381,6 +417,9 @@ export async function createStoreAdminAccess(
   } catch (error) {
     console.error("Error in createStoreAdminAccess:", error);
     const err = error as Error;
-    return { success: false, error: err.message || "Failed to create store Admin access." };
+    return {
+      success: false,
+      error: err.message || "Failed to create store Admin access.",
+    };
   }
 }

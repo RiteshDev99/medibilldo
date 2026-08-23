@@ -17,14 +17,23 @@ export const storeSchema = z.object({
   legalName: z.string().optional().or(z.literal("")),
   ownerName: z.string().optional().or(z.literal("")),
   email: z
-    .union([z.string().email("Invalid email address"), z.literal(""), z.undefined()])
+    .union([
+      z.string().email("Invalid email address"),
+      z.literal(""),
+      z.undefined(),
+    ])
     .optional(),
   alternatePhone: z.string().optional().or(z.literal("")),
   gstNumber: z
     .union([
-      z.string().regex(/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/i, "Invalid GSTIN format"),
+      z
+        .string()
+        .regex(
+          /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/i,
+          "Invalid GSTIN format"
+        ),
       z.literal(""),
-      z.undefined()
+      z.undefined(),
     ])
     .optional(),
   drugLicenseNumber: z.string().optional().or(z.literal("")),

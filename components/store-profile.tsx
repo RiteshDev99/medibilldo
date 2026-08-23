@@ -1,16 +1,29 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Building2,
+  Edit3,
+  FileText,
+  Globe,
+  Loader2,
+  MapPin,
+  Phone,
+  ShieldCheck,
+  User,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Building2, Edit3, FileText, Globe, Loader2, MapPin, Phone, ShieldCheck, User } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { storeSchema, type StoreSchemaValues } from "@/lib/schemas/store";
-import { updateStore } from "@/server/store";
-import type { Store } from "@/db/schema";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -27,6 +40,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import type { Store } from "@/db/schema";
+import { type StoreSchemaValues, storeSchema } from "@/lib/schemas/store";
+import { updateStore } from "@/server/store";
 
 interface StoreProfileProps {
   store: Store;
@@ -85,9 +101,9 @@ export function StoreProfile({ store }: StoreProfileProps) {
             <div className="flex size-14 items-center justify-center rounded-xl bg-zinc-900 text-white">
               {store.logo ? (
                 <img
-                  src={store.logo}
                   alt={store.storeName}
                   className="size-full rounded-xl object-cover"
+                  src={store.logo}
                 />
               ) : (
                 <Building2 className="size-6" />
@@ -98,15 +114,15 @@ export function StoreProfile({ store }: StoreProfileProps) {
                 {store.storeName}
               </CardTitle>
               {store.legalName && (
-                <CardDescription className="text-zinc-500 font-medium">
+                <CardDescription className="font-medium text-zinc-500">
                   {store.legalName}
                 </CardDescription>
               )}
             </div>
           </div>
           <Button
+            className="flex cursor-pointer items-center gap-2 rounded-lg bg-black px-4 py-2.5 font-bold text-white text-xs transition-all hover:bg-zinc-800"
             onClick={() => setIsEditDialogOpen(true)}
-            className="flex items-center gap-2 bg-black text-white hover:bg-zinc-800 rounded-lg py-2.5 px-4 font-bold text-xs cursor-pointer transition-all"
           >
             <Edit3 className="size-3.5" />
             Edit Store Profile
@@ -114,7 +130,6 @@ export function StoreProfile({ store }: StoreProfileProps) {
         </CardHeader>
         <CardContent className="pt-6">
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            
             {/* Owner & Contact Block */}
             <div className="space-y-4 rounded-xl border border-zinc-100 bg-zinc-50/50 p-4">
               <h3 className="flex items-center gap-2 font-bold text-xs text-zinc-500 uppercase tracking-wider">
@@ -123,25 +138,35 @@ export function StoreProfile({ store }: StoreProfileProps) {
               </h3>
               <div className="space-y-2 text-sm text-zinc-800">
                 <div>
-                  <span className="text-xs text-zinc-400 font-semibold block">Owner Name</span>
-                  <span className="font-medium">{store.ownerName || "Not Provided"}</span>
+                  <span className="block font-semibold text-xs text-zinc-400">
+                    Owner Name
+                  </span>
+                  <span className="font-medium">
+                    {store.ownerName || "Not Provided"}
+                  </span>
                 </div>
                 <div>
-                  <span className="text-xs text-zinc-400 font-semibold block">Phone Number</span>
-                  <span className="font-medium flex items-center gap-1.5 mt-0.5">
+                  <span className="block font-semibold text-xs text-zinc-400">
+                    Phone Number
+                  </span>
+                  <span className="mt-0.5 flex items-center gap-1.5 font-medium">
                     <Phone className="size-3 text-zinc-400" /> {store.phone}
                   </span>
                 </div>
                 {store.alternatePhone && (
                   <div>
-                    <span className="text-xs text-zinc-400 font-semibold block">Alternate Phone</span>
+                    <span className="block font-semibold text-xs text-zinc-400">
+                      Alternate Phone
+                    </span>
                     <span className="font-medium">{store.alternatePhone}</span>
                   </div>
                 )}
                 {store.email && (
                   <div>
-                    <span className="text-xs text-zinc-400 font-semibold block">Email Address</span>
-                    <span className="font-medium flex items-center gap-1.5 mt-0.5">
+                    <span className="block font-semibold text-xs text-zinc-400">
+                      Email Address
+                    </span>
+                    <span className="mt-0.5 flex items-center gap-1.5 font-medium">
                       <Globe className="size-3 text-zinc-400" /> {store.email}
                     </span>
                   </div>
@@ -157,22 +182,34 @@ export function StoreProfile({ store }: StoreProfileProps) {
               </h3>
               <div className="space-y-2 text-sm text-zinc-800">
                 <div>
-                  <span className="text-xs text-zinc-400 font-semibold block">Store Address</span>
-                  <span className="font-medium block leading-relaxed">{store.address}</span>
+                  <span className="block font-semibold text-xs text-zinc-400">
+                    Store Address
+                  </span>
+                  <span className="block font-medium leading-relaxed">
+                    {store.address}
+                  </span>
                 </div>
                 <div className="grid grid-cols-2 gap-2 pt-1">
                   <div>
-                    <span className="text-xs text-zinc-400 font-semibold block">City</span>
+                    <span className="block font-semibold text-xs text-zinc-400">
+                      City
+                    </span>
                     <span className="font-medium">{store.city}</span>
                   </div>
                   <div>
-                    <span className="text-xs text-zinc-400 font-semibold block">State</span>
+                    <span className="block font-semibold text-xs text-zinc-400">
+                      State
+                    </span>
                     <span className="font-medium">{store.state}</span>
                   </div>
                 </div>
                 <div className="pt-1">
-                  <span className="text-xs text-zinc-400 font-semibold block">Pincode</span>
-                  <span className="font-medium tracking-wide">{store.pincode}</span>
+                  <span className="block font-semibold text-xs text-zinc-400">
+                    Pincode
+                  </span>
+                  <span className="font-medium tracking-wide">
+                    {store.pincode}
+                  </span>
                 </div>
               </div>
             </div>
@@ -185,52 +222,59 @@ export function StoreProfile({ store }: StoreProfileProps) {
               </h3>
               <div className="space-y-2 text-sm text-zinc-800">
                 <div>
-                  <span className="text-xs text-zinc-400 font-semibold block">GSTIN</span>
-                  <span className="font-mono font-medium text-xs bg-zinc-100 px-2 py-0.5 rounded inline-block mt-0.5">
+                  <span className="block font-semibold text-xs text-zinc-400">
+                    GSTIN
+                  </span>
+                  <span className="mt-0.5 inline-block rounded bg-zinc-100 px-2 py-0.5 font-medium font-mono text-xs">
                     {store.gstNumber || "Not Provided"}
                   </span>
                 </div>
                 <div>
-                  <span className="text-xs text-zinc-400 font-semibold block">Drug License Number</span>
-                  <span className="font-medium flex items-center gap-1.5 mt-0.5">
-                    <FileText className="size-3 text-zinc-400" /> {store.drugLicenseNumber || "Not Provided"}
+                  <span className="block font-semibold text-xs text-zinc-400">
+                    Drug License Number
+                  </span>
+                  <span className="mt-0.5 flex items-center gap-1.5 font-medium">
+                    <FileText className="size-3 text-zinc-400" />{" "}
+                    {store.drugLicenseNumber || "Not Provided"}
                   </span>
                 </div>
                 <div>
-                  <span className="text-xs text-zinc-400 font-semibold block">Pharmacy License Number</span>
-                  <span className="font-medium flex items-center gap-1.5 mt-0.5">
-                    <FileText className="size-3 text-zinc-400" /> {store.pharmacyLicenseNumber || "Not Provided"}
+                  <span className="block font-semibold text-xs text-zinc-400">
+                    Pharmacy License Number
+                  </span>
+                  <span className="mt-0.5 flex items-center gap-1.5 font-medium">
+                    <FileText className="size-3 text-zinc-400" />{" "}
+                    {store.pharmacyLicenseNumber || "Not Provided"}
                   </span>
                 </div>
               </div>
             </div>
-
           </div>
         </CardContent>
       </Card>
 
       {/* Edit Store Dialog Modal */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+      <Dialog onOpenChange={setIsEditDialogOpen} open={isEditDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="font-extrabold text-2xl tracking-tight text-zinc-900">
+            <DialogTitle className="font-extrabold text-2xl text-zinc-900 tracking-tight">
               Edit Store Profile
             </DialogTitle>
-            <DialogDescription className="text-zinc-500 text-sm">
-              Update your medical store information. These changes will reflect immediately on bills and dashboard.
+            <DialogDescription className="text-sm text-zinc-500">
+              Update your medical store information. These changes will reflect
+              immediately on bills and dashboard.
             </DialogDescription>
           </DialogHeader>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="max-h-[60vh] overflow-y-auto px-1 py-1 space-y-6 pr-2 scrollbar-thin">
-                
+            <form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
+              <div className="scrollbar-thin max-h-[60vh] space-y-6 overflow-y-auto px-1 py-1 pr-2">
                 {/* General / Required Section */}
                 <div className="space-y-4">
-                  <h3 className="font-bold text-xs text-zinc-400 border-zinc-100 border-b pb-1.5 uppercase tracking-wider">
+                  <h3 className="border-zinc-100 border-b pb-1.5 font-bold text-xs text-zinc-400 uppercase tracking-wider">
                     General Information (Required)
                   </h3>
-                  
+
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <FormField
                       control={form.control}
@@ -242,8 +286,8 @@ export function StoreProfile({ store }: StoreProfileProps) {
                           </FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="e.g. Sharma Medical Store"
                               className="border-zinc-205 focus:border-black"
+                              placeholder="e.g. Sharma Medical Store"
                               {...field}
                             />
                           </FormControl>
@@ -262,8 +306,8 @@ export function StoreProfile({ store }: StoreProfileProps) {
                           </FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="e.g. 9876543210"
                               className="border-zinc-205 focus:border-black"
+                              placeholder="e.g. 9876543210"
                               {...field}
                             />
                           </FormControl>
@@ -283,8 +327,8 @@ export function StoreProfile({ store }: StoreProfileProps) {
                         </FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="e.g. Shop 12, Main Market Road"
                             className="border-zinc-205 focus:border-black"
+                            placeholder="e.g. Shop 12, Main Market Road"
                             {...field}
                           />
                         </FormControl>
@@ -304,8 +348,8 @@ export function StoreProfile({ store }: StoreProfileProps) {
                           </FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="e.g. New Delhi"
                               className="border-zinc-205 focus:border-black"
+                              placeholder="e.g. New Delhi"
                               {...field}
                             />
                           </FormControl>
@@ -324,8 +368,8 @@ export function StoreProfile({ store }: StoreProfileProps) {
                           </FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="e.g. Delhi"
                               className="border-zinc-205 focus:border-black"
+                              placeholder="e.g. Delhi"
                               {...field}
                             />
                           </FormControl>
@@ -344,8 +388,8 @@ export function StoreProfile({ store }: StoreProfileProps) {
                           </FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="e.g. 110001"
                               className="border-zinc-205 focus:border-black"
+                              placeholder="e.g. 110001"
                               {...field}
                             />
                           </FormControl>
@@ -358,7 +402,7 @@ export function StoreProfile({ store }: StoreProfileProps) {
 
                 {/* Additional / Optional Section */}
                 <div className="space-y-4">
-                  <h3 className="font-bold text-xs text-zinc-400 border-zinc-100 border-b pb-1.5 uppercase tracking-wider">
+                  <h3 className="border-zinc-100 border-b pb-1.5 font-bold text-xs text-zinc-400 uppercase tracking-wider">
                     Additional Details (Optional)
                   </h3>
 
@@ -373,8 +417,8 @@ export function StoreProfile({ store }: StoreProfileProps) {
                           </FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="e.g. Sharma Healthcare Pvt Ltd"
                               className="border-zinc-205 focus:border-black"
+                              placeholder="e.g. Sharma Healthcare Pvt Ltd"
                               {...field}
                             />
                           </FormControl>
@@ -393,8 +437,8 @@ export function StoreProfile({ store }: StoreProfileProps) {
                           </FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="e.g. Dr. Rajesh Sharma"
                               className="border-zinc-205 focus:border-black"
+                              placeholder="e.g. Dr. Rajesh Sharma"
                               {...field}
                             />
                           </FormControl>
@@ -415,9 +459,9 @@ export function StoreProfile({ store }: StoreProfileProps) {
                           </FormLabel>
                           <FormControl>
                             <Input
-                              type="email"
-                              placeholder="e.g. info@sharmamedical.com"
                               className="border-zinc-205 focus:border-black"
+                              placeholder="e.g. info@sharmamedical.com"
+                              type="email"
                               {...field}
                             />
                           </FormControl>
@@ -436,8 +480,8 @@ export function StoreProfile({ store }: StoreProfileProps) {
                           </FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="e.g. 011-23456789"
                               className="border-zinc-205 focus:border-black"
+                              placeholder="e.g. 011-23456789"
                               {...field}
                             />
                           </FormControl>
@@ -458,8 +502,8 @@ export function StoreProfile({ store }: StoreProfileProps) {
                           </FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="e.g. 07AAAAA1111A1Z1"
                               className="border-zinc-205 focus:border-black"
+                              placeholder="e.g. 07AAAAA1111A1Z1"
                               {...field}
                             />
                           </FormControl>
@@ -478,8 +522,8 @@ export function StoreProfile({ store }: StoreProfileProps) {
                           </FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="e.g. DL-12345"
                               className="border-zinc-205 focus:border-black"
+                              placeholder="e.g. DL-12345"
                               {...field}
                             />
                           </FormControl>
@@ -498,8 +542,8 @@ export function StoreProfile({ store }: StoreProfileProps) {
                           </FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="e.g. PL-67890"
                               className="border-zinc-205 focus:border-black"
+                              placeholder="e.g. PL-67890"
                               {...field}
                             />
                           </FormControl>
@@ -519,8 +563,8 @@ export function StoreProfile({ store }: StoreProfileProps) {
                         </FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="e.g. https://example.com/logo.png"
                             className="border-zinc-205 focus:border-black"
+                            placeholder="e.g. https://example.com/logo.png"
                             {...field}
                           />
                         </FormControl>
@@ -529,22 +573,21 @@ export function StoreProfile({ store }: StoreProfileProps) {
                     )}
                   />
                 </div>
-
               </div>
 
               <div className="flex items-center justify-end gap-3 border-zinc-100 border-t pt-4">
                 <Button
+                  className="cursor-pointer rounded-lg border border-zinc-200 px-4 py-2.5 font-bold text-xs"
+                  onClick={() => setIsEditDialogOpen(false)}
                   type="button"
                   variant="outline"
-                  onClick={() => setIsEditDialogOpen(false)}
-                  className="rounded-lg py-2.5 px-4 font-bold text-xs cursor-pointer border border-zinc-200"
                 >
                   Cancel
                 </Button>
                 <Button
-                  type="submit"
+                  className="cursor-pointer rounded-lg bg-black px-6 py-2.5 font-bold text-white transition-all hover:bg-zinc-800 disabled:opacity-50"
                   disabled={isLoading}
-                  className="bg-black text-white hover:bg-zinc-800 py-2.5 px-6 font-bold rounded-lg cursor-pointer transition-all disabled:opacity-50"
+                  type="submit"
                 >
                   {isLoading ? (
                     <>
