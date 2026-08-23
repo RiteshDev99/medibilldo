@@ -41,6 +41,49 @@ import {
   deleteMedicine,
   updateMedicine,
 } from "@/server/medicines";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { cn } from "@/lib/utils";
+import { X } from "lucide-react";
+
+function MedicineDialogOverlay({
+  className,
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Overlay>) {
+  return (
+    <DialogPrimitive.Overlay
+      className={cn(
+        "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-y-0 left-0 md:left-64 right-0 z-50 bg-black/40 data-[state=closed]:animate-out data-[state=open]:animate-in duration-200",
+        className
+      )}
+      {...props}
+    />
+  );
+}
+
+function MedicineDialogContent({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Content>) {
+  return (
+    <DialogPrimitive.Portal>
+      <MedicineDialogOverlay />
+      <DialogPrimitive.Content
+        className={cn(
+          "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] md:left-[calc(50%+8rem)] z-50 grid w-[90%] max-w-[1000px] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-xl border bg-background p-0 shadow-2xl duration-200 data-[state=closed]:animate-out data-[state=open]:animate-in overflow-hidden max-h-[90vh]",
+          className
+        )}
+        {...props}
+      >
+        {children}
+        <DialogPrimitive.Close className="absolute top-6 right-6 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+          <X className="size-5" />
+          <span className="sr-only">Close</span>
+        </DialogPrimitive.Close>
+      </DialogPrimitive.Content>
+    </DialogPrimitive.Portal>
+  );
+}
 
 interface MedicinesClientProps {
   initialMedicines: Medicine[];
@@ -52,7 +95,6 @@ export function MedicinesClient({
   isAdmin,
 }: MedicinesClientProps) {
   const router = useRouter();
-  const [medicines, setMedicines] = useState<Medicine[]>(initialMedicines);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("ALL");
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -71,13 +113,17 @@ export function MedicinesClient({
     ),
   ];
 
-  // Filtering logic
+  // Filtering logic: search matches product name, generic, manufacturer, brand, short name, barcode, and HSN
   const filteredMedicines = initialMedicines.filter((med) => {
+    const query = searchQuery.toLowerCase();
     const matchesSearch =
-      med.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      med.genericName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (med.manufacturer &&
-        med.manufacturer.toLowerCase().includes(searchQuery.toLowerCase()));
+      med.name.toLowerCase().includes(query) ||
+      med.genericName.toLowerCase().includes(query) ||
+      med.manufacturer.toLowerCase().includes(query) ||
+      med.brand?.toLowerCase().includes(query) ||
+      med.shortName?.toLowerCase().includes(query) ||
+      med.barcode?.toLowerCase().includes(query) ||
+      med.hsn?.toLowerCase().includes(query);
 
     const matchesCategory =
       categoryFilter === "ALL" || med.category.toUpperCase() === categoryFilter;
@@ -87,7 +133,10 @@ export function MedicinesClient({
 
   const handleAdd = async (values: MedicineFormValues) => {
     setIsLoading(true);
-    const res = await createMedicine(values);
+    const res = await createMedicine({
+      ...values,
+      prescriptionRequired: values.prescriptionRequired ?? false,
+    });
     setIsLoading(false);
 
     if (res.success) {
@@ -100,10 +149,15 @@ export function MedicinesClient({
   };
 
   const handleEdit = async (values: MedicineFormValues) => {
-    if (!editingMedicine) return;
+    if (!editingMedicine) {
+      return;
+    }
 
     setIsLoading(true);
-    const res = await updateMedicine(editingMedicine.id, values);
+    const res = await updateMedicine(editingMedicine.id, {
+      ...values,
+      prescriptionRequired: values.prescriptionRequired ?? false,
+    });
     setIsLoading(false);
 
     if (res.success) {
@@ -116,7 +170,9 @@ export function MedicinesClient({
   };
 
   const handleDelete = async () => {
-    if (!deletingMedicine) return;
+    if (!deletingMedicine) {
+      return;
+    }
 
     setIsLoading(true);
     const res = await deleteMedicine(deletingMedicine.id);
@@ -160,24 +216,30 @@ export function MedicinesClient({
 
       {/* Mini Tabs / Breadcrumbs */}
       <div className="flex select-none gap-2 overflow-x-auto border-zinc-200 border-b pb-px font-semibold text-xs text-zinc-400">
-        <button className="border-black border-b-2 px-4 py-2 text-black">
+        <button
+          className="border-black border-b-2 px-4 py-2 text-black"
+          type="button"
+        >
           All Medicines
         </button>
         <button
           className="px-4 py-2 transition-colors hover:text-black"
           disabled
+          type="button"
         >
           Categories (Soon)
         </button>
         <button
           className="px-4 py-2 transition-colors hover:text-black"
           disabled
+          type="button"
         >
           Manufacturers (Soon)
         </button>
         <button
           className="px-4 py-2 transition-colors hover:text-black"
           disabled
+          type="button"
         >
           Expiry Logs (Soon)
         </button>
@@ -190,7 +252,7 @@ export function MedicinesClient({
           <Input
             className="border-zinc-200 bg-white pl-9 focus:border-zinc-900"
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by name, formula, or manufacturer..."
+            placeholder="Search by name, generic, brand, manufacturer, barcode, HSN..."
             value={searchQuery}
           />
         </div>
@@ -251,10 +313,10 @@ export function MedicinesClient({
                     Manufacturer
                   </TableHead>
                   <TableHead className="py-3 font-bold text-[10px] text-zinc-500 uppercase tracking-wider">
-                    HSN
+                    Packing
                   </TableHead>
                   <TableHead className="py-3 font-bold text-[10px] text-zinc-500 uppercase tracking-wider">
-                    GST
+                    Barcode
                   </TableHead>
                   <TableHead className="py-3 text-right font-bold text-[10px] text-zinc-500 uppercase tracking-wider">
                     MRP
@@ -274,24 +336,38 @@ export function MedicinesClient({
                     key={med.id}
                   >
                     <TableCell className="font-bold text-zinc-950">
-                      {med.name}
+                      <div>
+                        <div>{med.name}</div>
+                        {med.brand && (
+                          <div className="font-normal text-[10px] text-zinc-400">
+                            Brand: {med.brand}
+                          </div>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="font-medium text-zinc-650">
                       {med.genericName}
                     </TableCell>
                     <TableCell className="font-medium text-zinc-600">
-                      <span className="rounded bg-zinc-100 px-2 py-0.5 text-xs text-zinc-800">
-                        {med.category}
-                      </span>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="w-fit rounded bg-zinc-100 px-2 py-0.5 text-[11px] text-zinc-800">
+                          {med.category}
+                        </span>
+                        {med.productType && (
+                          <span className="text-[9px] text-zinc-400">
+                            {med.productType}
+                          </span>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="font-medium text-zinc-650">
                       {med.manufacturer}
                     </TableCell>
-                    <TableCell className="font-mono text-xs text-zinc-500">
-                      {med.hsn || "—"}
+                    <TableCell className="font-medium text-zinc-650">
+                      {med.packing}
                     </TableCell>
-                    <TableCell className="font-semibold text-zinc-800">
-                      {med.gst}%
+                    <TableCell className="font-mono text-xs text-zinc-500">
+                      {med.barcode || "—"}
                     </TableCell>
                     <TableCell className="text-right font-extrabold text-zinc-950">
                       ₹{med.mrp.toFixed(2)}
@@ -354,69 +430,96 @@ export function MedicinesClient({
 
       {/* Add Medicine Dialog */}
       <Dialog onOpenChange={setIsAddOpen} open={isAddOpen}>
-        <DialogContent className="max-w-lg rounded-xl border border-zinc-200 bg-white shadow-xl">
-          <DialogHeader>
-            <DialogTitle className="font-extrabold text-lg text-zinc-900">
+        <MedicineDialogContent>
+          <DialogHeader className="p-6 pb-4">
+            <DialogTitle className="font-extrabold text-xl text-zinc-900">
               Add New Medicine
             </DialogTitle>
             <DialogDescription className="text-xs text-zinc-500">
-              Add a new record to the medicines database. This code will
-              represent a product item master.
+              Complete the steps below to register a new product in the inventory.
             </DialogDescription>
           </DialogHeader>
           <MedicineForm
             isLoading={isLoading}
             onSubmit={handleAdd}
+            onCancel={() => setIsAddOpen(false)}
             submitLabel="Create Medicine"
           />
-        </DialogContent>
+        </MedicineDialogContent>
       </Dialog>
 
       {/* Edit Medicine Dialog */}
       <Dialog
         onOpenChange={(open) => {
-          if (!open) setEditingMedicine(null);
+          if (!open) {
+            setEditingMedicine(null);
+          }
         }}
         open={editingMedicine !== null}
       >
-        <DialogContent className="max-w-lg rounded-xl border border-zinc-200 bg-white shadow-xl">
-          <DialogHeader>
-            <DialogTitle className="font-extrabold text-lg text-zinc-900">
+        <MedicineDialogContent>
+          <DialogHeader className="p-6 pb-4">
+            <DialogTitle className="font-extrabold text-xl text-zinc-900">
               Edit Medicine
             </DialogTitle>
             <DialogDescription className="text-xs text-zinc-500">
-              Update details for {editingMedicine?.name || "medicine"}.
+              Complete the steps below to update the product details in the inventory.
             </DialogDescription>
           </DialogHeader>
           {editingMedicine && (
             <MedicineForm
               defaultValues={{
                 name: editingMedicine.name,
+                shortName: editingMedicine.shortName || "",
                 genericName: editingMedicine.genericName,
-                category: editingMedicine.category,
                 manufacturer: editingMedicine.manufacturer,
+                brand: editingMedicine.brand || "",
+                category: editingMedicine.category,
+                productType: editingMedicine.productType || "",
+                packing: editingMedicine.packing,
+                quantityVolume: editingMedicine.quantityVolume || "",
+                uqcUnit: editingMedicine.uqcUnit || "",
+                conversionFactor: editingMedicine.conversionFactor,
                 hsn: editingMedicine.hsn || "",
                 gst: editingMedicine.gst,
+                cess: editingMedicine.cess ?? 0,
                 mrp: editingMedicine.mrp,
+                pRate: editingMedicine.pRate ?? undefined,
+                cost: editingMedicine.cost ?? undefined,
+                rateA: editingMedicine.rateA ?? undefined,
+                rateB: editingMedicine.rateB ?? undefined,
+                rateC: editingMedicine.rateC ?? undefined,
+                minimumQuantity: editingMedicine.minimumQuantity ?? 0,
+                maximumQuantity: editingMedicine.maximumQuantity ?? undefined,
+                reorderLevel: editingMedicine.reorderLevel ?? undefined,
+                reorderQuantity: editingMedicine.reorderQuantity ?? undefined,
+                barcode: editingMedicine.barcode || "",
+                drugSchedule: editingMedicine.drugSchedule || "",
+                prescriptionRequired:
+                  editingMedicine.prescriptionRequired ?? false,
+                storageCondition: editingMedicine.storageCondition || "",
                 status: editingMedicine.status as "ACTIVE" | "INACTIVE",
               }}
               isLoading={isLoading}
               onSubmit={handleEdit}
+              onCancel={() => setEditingMedicine(null)}
               submitLabel="Save Changes"
             />
           )}
-        </DialogContent>
+        </MedicineDialogContent>
       </Dialog>
 
       {/* View Details Dialog (Accessible to both Admin & Staff) */}
       <Dialog
         onOpenChange={(open) => {
-          if (!open) setViewingMedicine(null);
+          if (!open) {
+            setViewingMedicine(null);
+          }
         }}
         open={viewingMedicine !== null}
       >
-        <DialogContent className="max-w-md rounded-xl border border-zinc-200 bg-white shadow-xl">
-          <DialogHeader className="border-zinc-100 border-b pb-3">
+        <MedicineDialogContent>
+          <DialogHeader className="p-6 pb-4 border-zinc-150 border-b bg-[#f8f9fc]">
             <DialogTitle className="flex items-center gap-2 font-extrabold text-xl text-zinc-900">
               <Pill className="size-5 text-black" />
               {viewingMedicine?.name}
@@ -426,83 +529,301 @@ export function MedicinesClient({
             </DialogDescription>
           </DialogHeader>
           {viewingMedicine && (
-            <div className="space-y-4 pt-3 text-sm">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <span className="block font-bold text-[10px] text-zinc-450 uppercase tracking-wider">
-                    Formula / Generic
-                  </span>
-                  <span className="font-semibold text-zinc-900">
-                    {viewingMedicine.genericName}
-                  </span>
-                </div>
-                <div>
-                  <span className="block font-bold text-[10px] text-zinc-450 uppercase tracking-wider">
-                    Category
-                  </span>
-                  <span className="mt-0.5 inline-block rounded bg-zinc-100 px-2 py-0.5 font-semibold text-xs text-zinc-800">
-                    {viewingMedicine.category}
-                  </span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <span className="block font-bold text-[10px] text-zinc-450 uppercase tracking-wider">
-                    Manufacturer
-                  </span>
-                  <span className="font-semibold text-zinc-900">
-                    {viewingMedicine.manufacturer}
-                  </span>
-                </div>
-                <div>
-                  <span className="block font-bold text-[10px] text-zinc-450 uppercase tracking-wider">
-                    HSN Code
-                  </span>
-                  <span className="font-mono text-zinc-800">
-                    {viewingMedicine.hsn || "—"}
-                  </span>
-                </div>
-              </div>
-
-              <div className="-mx-6 grid grid-cols-3 gap-2 border-zinc-100 border-t border-b bg-zinc-50/50 px-6 py-3">
-                <div>
-                  <span className="block font-bold text-[10px] text-zinc-400 uppercase tracking-wider">
-                    GST Rate
-                  </span>
-                  <span className="font-extrabold text-base text-zinc-900">
-                    {viewingMedicine.gst}%
-                  </span>
-                </div>
-                <div>
-                  <span className="block font-bold text-[10px] text-zinc-400 uppercase tracking-wider">
-                    MRP
-                  </span>
-                  <span className="font-extrabold text-base text-zinc-900">
-                    ₹{viewingMedicine.mrp.toFixed(2)}
-                  </span>
-                </div>
-                <div>
-                  <span className="block font-bold text-[10px] text-zinc-400 uppercase tracking-wider">
-                    Status
-                  </span>
-                  <Badge className="mt-1 bg-black font-bold text-[9px] text-white">
-                    {viewingMedicine.status}
-                  </Badge>
+            <div className="p-6 max-h-[65vh] space-y-4 overflow-y-auto text-sm">
+              {/* Visual Section 1: Basic Info */}
+              <div className="space-y-3">
+                <span className="block border-zinc-100 border-b pb-1 font-bold text-xs text-zinc-400 uppercase tracking-wider">
+                  Basic Information
+                </span>
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+                  <div>
+                    <span className="block font-semibold text-[10px] text-zinc-400 uppercase">
+                      Formula / Generic
+                    </span>
+                    <span className="font-semibold text-zinc-900">
+                      {viewingMedicine.genericName}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block font-semibold text-[10px] text-zinc-400 uppercase">
+                      Category
+                    </span>
+                    <span className="mt-0.5 inline-block rounded bg-zinc-100 px-2 py-0.5 font-semibold text-xs text-zinc-800">
+                      {viewingMedicine.category}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block font-semibold text-[10px] text-zinc-400 uppercase">
+                      Manufacturer
+                    </span>
+                    <span className="font-semibold text-zinc-900">
+                      {viewingMedicine.manufacturer}
+                    </span>
+                  </div>
+                  {viewingMedicine.shortName && (
+                    <div>
+                      <span className="block font-semibold text-[10px] text-zinc-400 uppercase">
+                        Short Name
+                      </span>
+                      <span className="font-semibold text-zinc-900">
+                        {viewingMedicine.shortName}
+                      </span>
+                    </div>
+                  )}
+                  {viewingMedicine.brand && (
+                    <div>
+                      <span className="block font-semibold text-[10px] text-zinc-400 uppercase">
+                        Brand
+                      </span>
+                      <span className="font-semibold text-zinc-900">
+                        {viewingMedicine.brand}
+                      </span>
+                    </div>
+                  )}
+                  {viewingMedicine.productType && (
+                    <div>
+                      <span className="block font-semibold text-[10px] text-zinc-400 uppercase">
+                        Product Type
+                      </span>
+                      <span className="font-semibold text-zinc-900">
+                        {viewingMedicine.productType}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 pt-1 text-xs text-zinc-400">
+              {/* Visual Section 2: Packaging */}
+              <div className="space-y-3 pt-2">
+                <span className="block border-zinc-100 border-b pb-1 font-bold text-xs text-zinc-400 uppercase tracking-wider">
+                  Packaging & Conversion
+                </span>
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                  <div>
+                    <span className="block font-semibold text-[10px] text-zinc-400 uppercase">
+                      Packing
+                    </span>
+                    <span className="font-semibold text-zinc-900">
+                      {viewingMedicine.packing}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block font-semibold text-[10px] text-zinc-400 uppercase">
+                      Quantity / Volume
+                    </span>
+                    <span className="font-semibold text-zinc-900">
+                      {viewingMedicine.quantityVolume || "—"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block font-semibold text-[10px] text-zinc-400 uppercase">
+                      UQC / Unit
+                    </span>
+                    <span className="font-semibold text-zinc-900">
+                      {viewingMedicine.uqcUnit || "—"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block font-semibold text-[10px] text-zinc-400 uppercase">
+                      Conversion Factor
+                    </span>
+                    <span className="font-extrabold text-zinc-900">
+                      {viewingMedicine.conversionFactor}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Visual Section 3: Tax & Pricing */}
+              <div className="space-y-3 pt-2">
+                <span className="block border-zinc-100 border-b pb-1 font-bold text-xs text-zinc-400 uppercase tracking-wider">
+                  Tax & Pricing
+                </span>
+                <div className="grid grid-cols-3 gap-4 rounded-lg border border-zinc-100 bg-zinc-50 p-3 md:grid-cols-4">
+                  <div>
+                    <span className="block font-semibold text-[10px] text-zinc-400 uppercase">
+                      GST Rate
+                    </span>
+                    <span className="font-extrabold text-sm text-zinc-900">
+                      {viewingMedicine.gst}%
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block font-semibold text-[10px] text-zinc-400 uppercase">
+                      CESS
+                    </span>
+                    <span className="font-extrabold text-sm text-zinc-900">
+                      {viewingMedicine.cess}%
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block font-semibold text-[10px] text-zinc-400 uppercase">
+                      HSN Code
+                    </span>
+                    <span className="font-mono text-xs text-zinc-800">
+                      {viewingMedicine.hsn || "—"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block font-semibold text-[10px] text-zinc-400 uppercase">
+                      MRP (₹)
+                    </span>
+                    <span className="font-extrabold text-sm text-zinc-900">
+                      ₹{viewingMedicine.mrp.toFixed(2)}
+                    </span>
+                  </div>
+                  {viewingMedicine.pRate !== null && (
+                    <div>
+                      <span className="block font-semibold text-[10px] text-zinc-400 uppercase">
+                        P Rate
+                      </span>
+                      <span className="font-semibold text-zinc-900">
+                        ₹{viewingMedicine.pRate.toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                  {viewingMedicine.cost !== null && (
+                    <div>
+                      <span className="block font-semibold text-[10px] text-zinc-400 uppercase">
+                        Cost
+                      </span>
+                      <span className="font-semibold text-zinc-900">
+                        ₹{viewingMedicine.cost.toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                  {viewingMedicine.rateA !== null && (
+                    <div>
+                      <span className="block font-semibold text-[10px] text-zinc-400 uppercase">
+                        Rate A
+                      </span>
+                      <span className="font-semibold text-zinc-900">
+                        ₹{viewingMedicine.rateA.toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                  {viewingMedicine.rateB !== null && (
+                    <div>
+                      <span className="block font-semibold text-[10px] text-zinc-400 uppercase">
+                        Rate B
+                      </span>
+                      <span className="font-semibold text-zinc-900">
+                        ₹{viewingMedicine.rateB.toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                  {viewingMedicine.rateC !== null && (
+                    <div>
+                      <span className="block font-semibold text-[10px] text-zinc-400 uppercase">
+                        Rate C
+                      </span>
+                      <span className="font-semibold text-zinc-900">
+                        ₹{viewingMedicine.rateC.toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Visual Section 4: Inventory Rules */}
+              <div className="space-y-3 pt-2">
+                <span className="block border-zinc-100 border-b pb-1 font-bold text-xs text-zinc-400 uppercase tracking-wider">
+                  Inventory Rules
+                </span>
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                  <div>
+                    <span className="block font-semibold text-[10px] text-zinc-400 uppercase">
+                      Min Quantity
+                    </span>
+                    <span className="font-semibold text-zinc-900">
+                      {viewingMedicine.minimumQuantity}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block font-semibold text-[10px] text-zinc-400 uppercase">
+                      Max Quantity
+                    </span>
+                    <span className="font-semibold text-zinc-900">
+                      {viewingMedicine.maximumQuantity ?? "—"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block font-semibold text-[10px] text-zinc-400 uppercase">
+                      Reorder Level
+                    </span>
+                    <span className="font-semibold text-zinc-900">
+                      {viewingMedicine.reorderLevel ?? "—"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block font-semibold text-[10px] text-zinc-400 uppercase">
+                      Reorder Qty
+                    </span>
+                    <span className="font-semibold text-zinc-900">
+                      {viewingMedicine.reorderQuantity ?? "—"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Visual Section 5: Pharmacy Info */}
+              <div className="space-y-3 pt-2">
+                <span className="block border-zinc-100 border-b pb-1 font-bold text-xs text-zinc-400 uppercase tracking-wider">
+                  Pharmacy Configuration
+                </span>
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                  <div>
+                    <span className="block font-semibold text-[10px] text-zinc-400 uppercase">
+                      Barcode
+                    </span>
+                    <span className="font-mono text-xs text-zinc-800">
+                      {viewingMedicine.barcode || "—"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block font-semibold text-[10px] text-zinc-400 uppercase">
+                      Drug Schedule
+                    </span>
+                    <span className="font-semibold text-zinc-900">
+                      {viewingMedicine.drugSchedule || "—"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block font-semibold text-[10px] text-zinc-400 uppercase">
+                      Rx Required?
+                    </span>
+                    <Badge
+                      className={
+                        viewingMedicine.prescriptionRequired
+                          ? "bg-red-500 font-bold text-[9px] text-white hover:bg-red-600"
+                          : "bg-zinc-800 font-bold text-[9px] text-white"
+                      }
+                    >
+                      {viewingMedicine.prescriptionRequired ? "Yes" : "No"}
+                    </Badge>
+                  </div>
+                  <div>
+                    <span className="block font-semibold text-[10px] text-zinc-400 uppercase">
+                      Storage Condition
+                    </span>
+                    <span className="font-semibold text-zinc-900">
+                      {viewingMedicine.storageCondition || "—"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 border-zinc-150 border-t pt-4 text-xs text-zinc-400">
                 <div>
                   <span>Added On:</span>{" "}
-                  <span className="font-medium text-zinc-600">
-                    {new Date(viewingMedicine.createdAt).toLocaleDateString()}
+                  <span className="font-medium text-zinc-650">
+                    {new Date(viewingMedicine.createdAt).toLocaleString()}
                   </span>
                 </div>
                 <div className="text-right">
                   <span>Last Updated:</span>{" "}
-                  <span className="font-medium text-zinc-600">
-                    {new Date(viewingMedicine.updatedAt).toLocaleDateString()}
+                  <span className="font-medium text-zinc-650">
+                    {new Date(viewingMedicine.updatedAt).toLocaleString()}
                   </span>
                 </div>
               </div>
@@ -517,13 +838,15 @@ export function MedicinesClient({
               </div>
             </div>
           )}
-        </DialogContent>
+        </MedicineDialogContent>
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <Dialog
         onOpenChange={(open) => {
-          if (!open) setDeletingMedicine(null);
+          if (!open) {
+            setDeletingMedicine(null);
+          }
         }}
         open={deletingMedicine !== null}
       >
@@ -541,8 +864,12 @@ export function MedicinesClient({
                 <span className="font-bold text-zinc-900">
                   {deletingMedicine?.name}
                 </span>
-                ? This action deletes the product specification from the
-                directory permanently. This cannot be undone.
+                ?
+              </p>
+              <p className="mt-1.5 border-amber-500 border-l-2 pl-2 text-xs text-zinc-400 leading-relaxed">
+                This action is only available if the medicine has no dependent
+                billing, inventory, purchase, or historical records. Otherwise,
+                you can set it to INACTIVE.
               </p>
             </div>
           </div>
