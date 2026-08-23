@@ -19,7 +19,6 @@ import {
   Users,
   X,
 } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
@@ -70,11 +69,12 @@ export function DashboardSidebar({ user, storeName }: SidebarProps) {
     { name: "Stores", href: "/super-admin/stores", icon: Building2 },
   ];
 
-  const links = user.role === "SUPER_ADMIN"
-    ? superAdminLinks
-    : isAdmin
-      ? adminLinks
-      : staffLinks;
+  const links =
+    user.role === "SUPER_ADMIN"
+      ? superAdminLinks
+      : isAdmin
+        ? adminLinks
+        : staffLinks;
 
   const handleLogout = async () => {
     await authClient.signOut();
@@ -83,11 +83,10 @@ export function DashboardSidebar({ user, storeName }: SidebarProps) {
 
   const SidebarContent = () => (
     <div className="flex h-full select-none flex-col bg-white text-zinc-900">
-
       <div className="flex items-center justify-between border-zinc-150 border-b p-5">
-        <div className="flex flex-col min-w-0">
+        <div className="flex min-w-0 flex-col">
           <div className="flex items-center gap-2">
-            <div className="flex size-7 items-center justify-center rounded-lg bg-black font-extrabold text-xs text-white tracking-tighter">
+            <div className="flex size-7 items-center justify-center rounded-lg bg-black font-extrabold text-white text-xs tracking-tighter">
               mb
             </div>
             <span className="font-extrabold text-md tracking-tight">
@@ -100,7 +99,7 @@ export function DashboardSidebar({ user, storeName }: SidebarProps) {
             </span>
           )} */}
         </div>
-    
+
         <button
           className="text-zinc-500 transition-colors hover:text-black md:hidden"
           onClick={() => setIsOpen(false)}
@@ -186,12 +185,12 @@ export function DashboardSidebar({ user, storeName }: SidebarProps) {
 
       {/* Mobile Top Bar */}
       <div className="sticky top-0 z-40 flex items-center justify-between border-zinc-150 border-b bg-white px-4 py-3 text-zinc-950 md:hidden">
-        <div className="flex flex-col min-w-0">
+        <div className="flex min-w-0 flex-col">
           <span className="font-extrabold text-sm tracking-tight">
             MediBilldo
           </span>
           {storeName && (
-            <span className="font-bold text-[10px] text-zinc-500 truncate max-w-[180px]">
+            <span className="max-w-[180px] truncate font-bold text-[10px] text-zinc-500">
               {storeName}
             </span>
           )}

@@ -1,7 +1,7 @@
 import { AccessDenied } from "@/components/access-denied";
-import { getCurrentUser } from "@/server/users";
-import { getCurrentStore } from "@/server/store";
 import { StoreProfile } from "@/components/store-profile";
+import { getCurrentStore } from "@/server/store";
+import { getCurrentUser } from "@/server/users";
 
 export default async function SettingsPage() {
   const session = await getCurrentUser();
@@ -23,7 +23,8 @@ export default async function SettingsPage() {
           Settings
         </h1>
         <p className="mt-1 text-sm text-zinc-550">
-          Manage your medical store details, licensing information, and billing preferences.
+          Manage your medical store details, licensing information, and billing
+          preferences.
         </p>
       </div>
 

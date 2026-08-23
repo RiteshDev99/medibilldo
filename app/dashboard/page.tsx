@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -18,13 +19,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/server/users";
 
 export default async function DashboardPage() {
   const session = await getCurrentUser();
   const user = session.currentUser;
-  
+
   if (user.role === "SUPER_ADMIN") {
     redirect("/super-admin");
   }
@@ -78,7 +78,7 @@ export default async function DashboardPage() {
           <div className="relative z-10 drop-shadow-[0_8px_16px_rgba(0,0,0,0.3)] filter transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.03]">
             <Image
               alt="MediBilldo Mascot"
-              className="h-25  w-auto object-contain md:h-45"
+              className="h-25 w-auto object-contain md:h-45"
               height={150}
               priority
               src="/mascot.png"
@@ -108,7 +108,8 @@ export default async function DashboardPage() {
                   Super Admin Management features are under construction.
                 </p>
                 <p className="mt-1 text-xs text-zinc-500">
-                  You are logged in as SUPER_ADMIN. Multi-store management and system preferences will be available soon.
+                  You are logged in as SUPER_ADMIN. Multi-store management and
+                  system preferences will be available soon.
                 </p>
               </div>
             </CardContent>

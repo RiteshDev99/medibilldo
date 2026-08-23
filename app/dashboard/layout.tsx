@@ -1,7 +1,7 @@
-import { DashboardSidebar } from "@/components/dashboard-sidebar";
-import { getCurrentUser } from "@/server/users";
-import { getCurrentStore } from "@/server/store";
 import { CreateStoreDialog } from "@/components/create-store-dialog";
+import { DashboardSidebar } from "@/components/dashboard-sidebar";
+import { getCurrentStore } from "@/server/store";
+import { getCurrentUser } from "@/server/users";
 
 export default async function DashboardLayout({
   children,
@@ -19,7 +19,9 @@ export default async function DashboardLayout({
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50/50 p-6 text-zinc-950">
         <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-8 text-center shadow-xs">
-          <h1 className="font-extrabold text-2xl text-red-650 tracking-tight">Store Inactive</h1>
+          <h1 className="font-extrabold text-2xl text-red-650 tracking-tight">
+            Store Inactive
+          </h1>
           <p className="mt-4 text-sm text-zinc-500 leading-relaxed">
             This store is currently inactive.
           </p>
@@ -34,16 +36,14 @@ export default async function DashboardLayout({
   return (
     <div className="flex min-h-screen flex-col bg-zinc-50/50 md:flex-row">
       <DashboardSidebar
-        user={{ name: user.name, email: user.email, role: user.role }}
         storeName={currentStore?.storeName}
+        user={{ name: user.name, email: user.email, role: user.role }}
       />
       <main className="min-h-screen flex-1 md:pl-64">
         <div className="w-full">{children}</div>
       </main>
 
-      {isAdmin && hasNoStore && (
-        <CreateStoreDialog isOpen={true} />
-      )}
+      {isAdmin && hasNoStore && <CreateStoreDialog isOpen={true} />}
     </div>
   );
 }
