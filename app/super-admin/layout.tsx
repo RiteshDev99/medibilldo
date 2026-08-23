@@ -1,5 +1,5 @@
-import { requireSuperAdmin } from "@/server/permissions";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
+import { requireSuperAdmin } from "@/server/permissions";
 
 export default async function SuperAdminLayout({
   children,

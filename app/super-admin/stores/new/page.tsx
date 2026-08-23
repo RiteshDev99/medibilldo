@@ -1,15 +1,20 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ArrowLeft, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, ArrowLeft } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { storeSchema, type StoreSchemaValues } from "@/lib/schemas/store";
-import { createStore } from "@/server/store";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -19,7 +24,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import Link from "next/link";
+import { type StoreSchemaValues, storeSchema } from "@/lib/schemas/store";
+import { createStore } from "@/server/store";
 
 export default function NewStorePage() {
   const router = useRouter();
@@ -69,33 +75,40 @@ export default function NewStorePage() {
       {/* Breadcrumb Header */}
       <div className="flex items-center gap-2 border-zinc-200 border-b pb-4">
         <Link href="/super-admin/stores">
-          <Button variant="ghost" size="sm" className="gap-1 border-zinc-200 bg-white hover:bg-zinc-100">
+          <Button
+            className="gap-1 border-zinc-200 bg-white hover:bg-zinc-100"
+            size="sm"
+            variant="ghost"
+          >
             <ArrowLeft className="size-4" />
             Back to Directory
           </Button>
         </Link>
       </div>
 
-      <div className="max-w-3xl mx-auto">
+      <div className="mx-auto max-w-3xl">
         <Card className="border-zinc-200 bg-white shadow-xs">
           <CardHeader className="border-zinc-100 border-b pb-6">
-            <CardTitle className="font-extrabold text-2xl tracking-tight text-zinc-900">
+            <CardTitle className="font-extrabold text-2xl text-zinc-900 tracking-tight">
               Create New Store
             </CardTitle>
-            <CardDescription className="text-zinc-500 text-sm">
-              Register a new operational pharmacy location on the platform. It will be set to ACTIVE with no owner assigned.
+            <CardDescription className="text-sm text-zinc-500">
+              Register a new operational pharmacy location on the platform. It
+              will be set to ACTIVE with no owner assigned.
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-6">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                
+              <form
+                className="space-y-6"
+                onSubmit={form.handleSubmit(onSubmit)}
+              >
                 {/* General Information Section */}
                 <div className="space-y-4">
-                  <h3 className="font-bold text-xs text-zinc-400 border-zinc-100 border-b pb-1.5 uppercase tracking-wider">
+                  <h3 className="border-zinc-100 border-b pb-1.5 font-bold text-xs text-zinc-400 uppercase tracking-wider">
                     General Information (Required)
                   </h3>
-                  
+
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <FormField
                       control={form.control}
@@ -107,8 +120,8 @@ export default function NewStorePage() {
                           </FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="e.g. Sharma Medical Store"
                               className="border-zinc-200 focus:border-black"
+                              placeholder="e.g. Sharma Medical Store"
                               {...field}
                             />
                           </FormControl>
@@ -127,8 +140,8 @@ export default function NewStorePage() {
                           </FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="e.g. 9876543210"
                               className="border-zinc-200 focus:border-black"
+                              placeholder="e.g. 9876543210"
                               {...field}
                             />
                           </FormControl>
@@ -148,8 +161,8 @@ export default function NewStorePage() {
                         </FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="e.g. Shop 12, Main Market Road"
                             className="border-zinc-200 focus:border-black"
+                            placeholder="e.g. Shop 12, Main Market Road"
                             {...field}
                           />
                         </FormControl>
@@ -169,8 +182,8 @@ export default function NewStorePage() {
                           </FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="e.g. New Delhi"
                               className="border-zinc-200 focus:border-black"
+                              placeholder="e.g. New Delhi"
                               {...field}
                             />
                           </FormControl>
@@ -189,8 +202,8 @@ export default function NewStorePage() {
                           </FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="e.g. Delhi"
                               className="border-zinc-200 focus:border-black"
+                              placeholder="e.g. Delhi"
                               {...field}
                             />
                           </FormControl>
@@ -209,8 +222,8 @@ export default function NewStorePage() {
                           </FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="e.g. 110001"
                               className="border-zinc-200 focus:border-black"
+                              placeholder="e.g. 110001"
                               {...field}
                             />
                           </FormControl>
@@ -223,7 +236,7 @@ export default function NewStorePage() {
 
                 {/* Additional Information Section */}
                 <div className="space-y-4">
-                  <h3 className="font-bold text-xs text-zinc-400 border-zinc-100 border-b pb-1.5 uppercase tracking-wider">
+                  <h3 className="border-zinc-100 border-b pb-1.5 font-bold text-xs text-zinc-400 uppercase tracking-wider">
                     Additional Details (Optional)
                   </h3>
 
@@ -238,8 +251,8 @@ export default function NewStorePage() {
                           </FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="e.g. Sharma Healthcare Pvt Ltd"
                               className="border-zinc-200 focus:border-black"
+                              placeholder="e.g. Sharma Healthcare Pvt Ltd"
                               {...field}
                             />
                           </FormControl>
@@ -258,8 +271,8 @@ export default function NewStorePage() {
                           </FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="e.g. Dr. Rajesh Sharma"
                               className="border-zinc-200 focus:border-black"
+                              placeholder="e.g. Dr. Rajesh Sharma"
                               {...field}
                             />
                           </FormControl>
@@ -280,9 +293,9 @@ export default function NewStorePage() {
                           </FormLabel>
                           <FormControl>
                             <Input
-                              type="email"
-                              placeholder="e.g. info@sharmamedical.com"
                               className="border-zinc-200 focus:border-black"
+                              placeholder="e.g. info@sharmamedical.com"
+                              type="email"
                               {...field}
                             />
                           </FormControl>
@@ -301,8 +314,8 @@ export default function NewStorePage() {
                           </FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="e.g. 011-23456789"
                               className="border-zinc-200 focus:border-black"
+                              placeholder="e.g. 011-23456789"
                               {...field}
                             />
                           </FormControl>
@@ -323,8 +336,8 @@ export default function NewStorePage() {
                           </FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="e.g. 07AAAAA1111A1Z1"
                               className="border-zinc-200 focus:border-black"
+                              placeholder="e.g. 07AAAAA1111A1Z1"
                               {...field}
                             />
                           </FormControl>
@@ -343,8 +356,8 @@ export default function NewStorePage() {
                           </FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="e.g. DL-12345"
                               className="border-zinc-200 focus:border-black"
+                              placeholder="e.g. DL-12345"
                               {...field}
                             />
                           </FormControl>
@@ -363,8 +376,8 @@ export default function NewStorePage() {
                           </FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="e.g. PL-67890"
                               className="border-zinc-200 focus:border-black"
+                              placeholder="e.g. PL-67890"
                               {...field}
                             />
                           </FormControl>
@@ -384,8 +397,8 @@ export default function NewStorePage() {
                         </FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="e.g. https://example.com/logo.png"
                             className="border-zinc-200 focus:border-black"
+                            placeholder="e.g. https://example.com/logo.png"
                             {...field}
                           />
                         </FormControl>
@@ -397,9 +410,9 @@ export default function NewStorePage() {
 
                 <div className="flex items-center justify-end border-zinc-100 border-t pt-4">
                   <Button
-                    type="submit"
+                    className="w-full cursor-pointer rounded-lg bg-black px-8 py-6 font-bold text-white transition-all hover:bg-zinc-800 disabled:opacity-50 sm:w-auto"
                     disabled={isLoading}
-                    className="w-full sm:w-auto bg-black text-white hover:bg-zinc-800 py-6 px-8 font-bold rounded-lg cursor-pointer transition-all disabled:opacity-50"
+                    type="submit"
                   >
                     {isLoading ? (
                       <>

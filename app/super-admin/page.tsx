@@ -1,11 +1,23 @@
-import { db } from "@/db/drizzle";
-import { store, audit } from "@/db/schema";
-import { eq, desc, count } from "drizzle-orm";
-import { requireSuperAdmin } from "@/server/permissions";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, ShieldAlert, ShieldCheck, Activity, Plus } from "lucide-react";
+import { count, desc, eq } from "drizzle-orm";
+import {
+  Activity,
+  Building2,
+  Plus,
+  ShieldAlert,
+  ShieldCheck,
+} from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { db } from "@/db/drizzle";
+import { audit, store } from "@/db/schema";
+import { requireSuperAdmin } from "@/server/permissions";
 
 export default async function SuperAdminDashboard() {
   const session = await requireSuperAdmin();
@@ -15,10 +27,16 @@ export default async function SuperAdminDashboard() {
   const totalStoresResult = await db.select({ value: count() }).from(store);
   const totalStores = totalStoresResult[0]?.value || 0;
 
-  const activeStoresResult = await db.select({ value: count() }).from(store).where(eq(store.status, "ACTIVE"));
+  const activeStoresResult = await db
+    .select({ value: count() })
+    .from(store)
+    .where(eq(store.status, "ACTIVE"));
   const activeStores = activeStoresResult[0]?.value || 0;
 
-  const inactiveStoresResult = await db.select({ value: count() }).from(store).where(eq(store.status, "INACTIVE"));
+  const inactiveStoresResult = await db
+    .select({ value: count() })
+    .from(store)
+    .where(eq(store.status, "INACTIVE"));
   const inactiveStores = inactiveStoresResult[0]?.value || 0;
 
   const auditLogs = await db.query.audit.findMany({
@@ -41,7 +59,8 @@ export default async function SuperAdminDashboard() {
               Super Admin Overview 👋
             </h1>
             <p className="mt-2 max-w-xl text-sm text-zinc-400 leading-relaxed">
-              Monitor operational status, create new medical stores, and view system logs across all pharmacy outlets.
+              Monitor operational status, create new medical stores, and view
+              system logs across all pharmacy outlets.
             </p>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-4 md:justify-start">
@@ -66,7 +85,9 @@ export default async function SuperAdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="font-extrabold text-3xl">{totalStores}</div>
-            <p className="mt-1 text-[10px] text-zinc-450">Registered store locations</p>
+            <p className="mt-1 text-[10px] text-zinc-450">
+              Registered store locations
+            </p>
           </CardContent>
         </Card>
 
@@ -78,8 +99,12 @@ export default async function SuperAdminDashboard() {
             <ShieldCheck className="size-4 text-emerald-500" />
           </CardHeader>
           <CardContent>
-            <div className="font-extrabold text-3xl text-emerald-600">{activeStores}</div>
-            <p className="mt-1 text-[10px] text-zinc-450">Currently operating</p>
+            <div className="font-extrabold text-3xl text-emerald-600">
+              {activeStores}
+            </div>
+            <p className="mt-1 text-[10px] text-zinc-450">
+              Currently operating
+            </p>
           </CardContent>
         </Card>
 
@@ -91,7 +116,9 @@ export default async function SuperAdminDashboard() {
             <ShieldAlert className="size-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="font-extrabold text-3xl text-red-600">{inactiveStores}</div>
+            <div className="font-extrabold text-3xl text-red-600">
+              {inactiveStores}
+            </div>
             <p className="mt-1 text-[10px] text-zinc-450">Access restricted</p>
           </CardContent>
         </Card>
@@ -113,27 +140,41 @@ export default async function SuperAdminDashboard() {
         <CardContent className="p-0">
           {auditLogs.length === 0 ? (
             <div className="p-12 text-center text-zinc-405">
-              <p className="text-sm font-semibold">No activity recorded yet.</p>
+              <p className="font-semibold text-sm">No activity recorded yet.</p>
             </div>
           ) : (
             <div className="divide-y divide-zinc-100">
               {auditLogs.map((log) => (
-                <div key={log.id} className="flex flex-col justify-between gap-2 px-6 py-4 sm:flex-row sm:items-center">
+                <div
+                  className="flex flex-col justify-between gap-2 px-6 py-4 sm:flex-row sm:items-center"
+                  key={log.id}
+                >
                   <div className="space-y-1">
-                    <span className={`inline-flex items-center rounded px-2 py-0.5 font-bold text-[9px] uppercase tracking-wider ${
-                      log.action === "Store Created" ? "bg-blue-50 text-blue-800 border border-blue-200" :
-                      log.action === "Store Activated" ? "bg-emerald-50 text-emerald-800 border border-emerald-200" :
-                      "bg-red-50 text-red-800 border border-red-200"
-                    }`}>
+                    <span
+                      className={`inline-flex items-center rounded px-2 py-0.5 font-bold text-[9px] uppercase tracking-wider ${
+                        log.action === "Store Created"
+                          ? "border border-blue-200 bg-blue-50 text-blue-800"
+                          : log.action === "Store Activated"
+                            ? "border border-emerald-200 bg-emerald-50 text-emerald-800"
+                            : "border border-red-200 bg-red-50 text-red-800"
+                      }`}
+                    >
                       {log.action}
                     </span>
                     <p className="font-bold text-sm text-zinc-900">
                       {log.storeName}
-                      <span className="ml-2 font-normal text-xs text-zinc-400">(ID: {log.storeId})</span>
+                      <span className="ml-2 font-normal text-xs text-zinc-400">
+                        (ID: {log.storeId})
+                      </span>
                     </p>
                   </div>
                   <div className="flex flex-col text-left sm:text-right">
-                    <span className="font-medium text-xs text-zinc-650">Performed by: <span className="font-bold text-zinc-900">{log.performedBy}</span></span>
+                    <span className="font-medium text-xs text-zinc-650">
+                      Performed by:{" "}
+                      <span className="font-bold text-zinc-900">
+                        {log.performedBy}
+                      </span>
+                    </span>
                     <span className="text-[10px] text-zinc-400">
                       {new Date(log.createdAt).toLocaleString()}
                     </span>

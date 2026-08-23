@@ -1,6 +1,6 @@
+import type { Store } from "@/db/schema";
 import { getAllStores } from "@/server/store";
 import { StoresClient } from "./stores-client";
-import type { Store } from "@/db/schema";
 
 interface StoresPageProps {
   searchParams: Promise<{
@@ -8,7 +8,9 @@ interface StoresPageProps {
   }>;
 }
 
-export default async function SuperAdminStoresPage({ searchParams }: StoresPageProps) {
+export default async function SuperAdminStoresPage({
+  searchParams,
+}: StoresPageProps) {
   const resolvedParams = await searchParams;
   const searchVal = resolvedParams?.search || "";
 
