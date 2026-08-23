@@ -1,32 +1,34 @@
 import {
   boolean,
   doublePrecision,
+  index,
   integer,
   pgTable,
   text,
   timestamp,
-  index,
 } from "drizzle-orm/pg-core";
 
-export const user = pgTable("user", {
-  id: text("id").primaryKey(),
-  name: text("name").notNull(),
-  email: text("email").notNull().unique(),
-  emailVerified: boolean("email_verified")
-    .$defaultFn(() => false)
-    .notNull(),
-  image: text("image"),
-  role: text("role").default("STAFF").notNull(),
-  storeId: text("store_id"),
-  createdAt: timestamp("created_at")
-    .$defaultFn(() => /* @__PURE__ */ new Date())
-    .notNull(),
-  updatedAt: timestamp("updated_at")
-    .$defaultFn(() => /* @__PURE__ */ new Date())
-    .notNull(),
-}, (table) => [
-  index("user_store_id_idx").on(table.storeId),
-]);
+export const user = pgTable(
+  "user",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    email: text("email").notNull().unique(),
+    emailVerified: boolean("email_verified")
+      .$defaultFn(() => false)
+      .notNull(),
+    image: text("image"),
+    role: text("role").default("STAFF").notNull(),
+    storeId: text("store_id"),
+    createdAt: timestamp("created_at")
+      .$defaultFn(() => /* @__PURE__ */ new Date())
+      .notNull(),
+    updatedAt: timestamp("updated_at")
+      .$defaultFn(() => /* @__PURE__ */ new Date())
+      .notNull(),
+  },
+  (table) => [index("user_store_id_idx").on(table.storeId)]
+);
 
 export const session = pgTable("session", {
   id: text("id").primaryKey(),
@@ -72,56 +74,91 @@ export const verification = pgTable("verification", {
   ),
 });
 
-export const medicine = pgTable("medicine", {
-  id: text("id").primaryKey(),
-  name: text("name").notNull(),
-  genericName: text("generic_name").notNull(),
-  category: text("category").notNull(),
-  manufacturer: text("manufacturer").notNull(),
-  hsn: text("hsn"),
-  gst: integer("gst").notNull(), // Percentage, e.g. 5, 12, 18, 28
-  mrp: doublePrecision("mrp").notNull(), // MRP in currency
-  status: text("status").default("ACTIVE").notNull(),
-  createdAt: timestamp("created_at")
-    .$defaultFn(() => new Date())
-    .notNull(),
-  updatedAt: timestamp("updated_at")
-    .$defaultFn(() => new Date())
-    .notNull(),
-});
+export const medicine = pgTable(
+  "medicine",
+  {
+    id: text("id").primaryKey(),
+    storeId: text("store_id")
+      .notNull()
+      .references(() => store.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    shortName: text("short_name"),
+    genericName: text("generic_name").notNull(),
+    manufacturer: text("manufacturer").notNull(),
+    brand: text("brand"),
+    category: text("category").notNull(),
+    productType: text("product_type"),
+    packing: text("packing").notNull(),
+    quantityVolume: text("quantity_volume"),
+    uqcUnit: text("uqc_unit"),
+    conversionFactor: integer("conversion_factor").default(1).notNull(),
+    hsn: text("hsn"),
+    gst: integer("gst").notNull(), // Percentage, e.g. 5, 12, 18, 28
+    cess: doublePrecision("cess").default(0),
+    mrp: doublePrecision("mrp").notNull(), // MRP in currency
+    pRate: doublePrecision("p_rate"),
+    cost: doublePrecision("cost"),
+    rateA: doublePrecision("rate_a"),
+    rateB: doublePrecision("rate_b"),
+    rateC: doublePrecision("rate_c"),
+    minimumQuantity: integer("minimum_quantity").default(0),
+    maximumQuantity: integer("maximum_quantity"),
+    reorderLevel: integer("reorder_level"),
+    reorderQuantity: integer("reorder_quantity"),
+    barcode: text("barcode"),
+    drugSchedule: text("drug_schedule"),
+    prescriptionRequired: boolean("prescription_required")
+      .default(false)
+      .notNull(),
+    storageCondition: text("storage_condition"),
+    status: text("status").default("ACTIVE").notNull(),
+    createdAt: timestamp("created_at")
+      .$defaultFn(() => new Date())
+      .notNull(),
+    updatedAt: timestamp("updated_at")
+      .$defaultFn(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("medicine_store_id_idx").on(table.storeId),
+    index("medicine_store_id_barcode_idx").on(table.storeId, table.barcode),
+  ]
+);
 
 export type User = typeof user.$inferSelect;
 export type Medicine = typeof medicine.$inferSelect;
 
-export const store = pgTable("store", {
-  id: text("id").primaryKey(),
-  ownerId: text("owner_id")
-    .unique()
-    .references(() => user.id, { onDelete: "set null" }),
-  storeName: text("store_name").notNull(),
-  legalName: text("legal_name"),
-  ownerName: text("owner_name"),
-  phone: text("phone").notNull(),
-  alternatePhone: text("alternate_phone"),
-  email: text("email"),
-  address: text("address").notNull(),
-  city: text("city").notNull(),
-  state: text("state").notNull(),
-  pincode: text("pincode").notNull(),
-  gstNumber: text("gst_number"),
-  drugLicenseNumber: text("drug_license_number"),
-  pharmacyLicenseNumber: text("pharmacy_license_number"),
-  logo: text("logo"),
-  status: text("status").default("ACTIVE").notNull(),
-  createdAt: timestamp("created_at")
-    .$defaultFn(() => new Date())
-    .notNull(),
-  updatedAt: timestamp("updated_at")
-    .$defaultFn(() => new Date())
-    .notNull(),
-}, (table) => [
-  index("store_owner_id_idx").on(table.ownerId),
-]);
+export const store = pgTable(
+  "store",
+  {
+    id: text("id").primaryKey(),
+    ownerId: text("owner_id")
+      .unique()
+      .references(() => user.id, { onDelete: "set null" }),
+    storeName: text("store_name").notNull(),
+    legalName: text("legal_name"),
+    ownerName: text("owner_name"),
+    phone: text("phone").notNull(),
+    alternatePhone: text("alternate_phone"),
+    email: text("email"),
+    address: text("address").notNull(),
+    city: text("city").notNull(),
+    state: text("state").notNull(),
+    pincode: text("pincode").notNull(),
+    gstNumber: text("gst_number"),
+    drugLicenseNumber: text("drug_license_number"),
+    pharmacyLicenseNumber: text("pharmacy_license_number"),
+    logo: text("logo"),
+    status: text("status").default("ACTIVE").notNull(),
+    createdAt: timestamp("created_at")
+      .$defaultFn(() => new Date())
+      .notNull(),
+    updatedAt: timestamp("updated_at")
+      .$defaultFn(() => new Date())
+      .notNull(),
+  },
+  (table) => [index("store_owner_id_idx").on(table.ownerId)]
+);
 
 export type Store = typeof store.$inferSelect;
 
