@@ -1,11 +1,11 @@
+import { and, desc, eq } from "drizzle-orm";
 import { AccessDenied } from "@/components/access-denied";
-import { getCurrentUser } from "@/server/users";
-import { getCurrentStore } from "@/server/store";
 import { db } from "@/db/drizzle";
-import { user as userTable } from "@/db/schema";
-import { eq, and, desc } from "drizzle-orm";
-import { StaffClient } from "./staff-client";
 import type { User as DbUser } from "@/db/schema";
+import { user as userTable } from "@/db/schema";
+import { getCurrentStore } from "@/server/store";
+import { getCurrentUser } from "@/server/users";
+import { StaffClient } from "./staff-client";
 
 export default async function StaffPage() {
   const session = await getCurrentUser();
@@ -18,9 +18,13 @@ export default async function StaffPage() {
   const currentStore = await getCurrentStore();
   if (!currentStore) {
     return (
-      <div className="p-6 md:p-10 text-center">
-        <p className="font-semibold text-sm text-zinc-800">No store profile associated.</p>
-        <p className="mt-1 text-xs text-zinc-500">Please configure your store profile first.</p>
+      <div className="p-6 text-center md:p-10">
+        <p className="font-semibold text-sm text-zinc-800">
+          No store profile associated.
+        </p>
+        <p className="mt-1 text-xs text-zinc-500">
+          Please configure your store profile first.
+        </p>
       </div>
     );
   }
