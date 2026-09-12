@@ -9,18 +9,27 @@ import { user } from "@/db/schema";
 import { auth } from "@/lib/auth";
 
 export const getCurrentUser = async () => {
-
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  let session: Awaited<ReturnType<typeof auth.api.getSession>> = null;
+  try {
+    session = await auth.api.getSession({
+      headers: await headers(),
+    });
+  } catch (error) {
+    console.error("Failed to retrieve session in getCurrentUser:", error);
+  }
 
   if (!session) {
     redirect("/login");
   }
 
-  const currentUser = await db.query.user.findFirst({
-    where: eq(user.id, session.user.id),
-  });
+  let currentUser: (typeof user.$inferSelect) | null | undefined = null;
+  try {
+    currentUser = await db.query.user.findFirst({
+      where: eq(user.id, session.user.id),
+    });
+  } catch (error) {
+    console.error("Failed to retrieve user in getCurrentUser:", error);
+  }
 
   if (!currentUser) {
     redirect("/login");

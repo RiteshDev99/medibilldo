@@ -31,9 +31,14 @@ export const isSuperAdmin = async () => {
 };
 
 export const requireSuperAdmin = async () => {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  let session: Awaited<ReturnType<typeof auth.api.getSession>> = null;
+  try {
+    session = await auth.api.getSession({
+      headers: await headers(),
+    });
+  } catch (error) {
+    console.error("Failed to retrieve session in requireSuperAdmin:", error);
+  }
 
   if (!session || session.user?.role !== "SUPER_ADMIN") {
     redirect("/login");
