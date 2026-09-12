@@ -1,30 +1,53 @@
+import { redirect } from "next/navigation";
+import { AccessDenied } from "@/components/access-denied";
+import { getCurrentStore } from "@/server/store";
 import { getCurrentUser } from "@/server/users";
+import { BillingClient } from "./billing-client";
 
 export default async function BillingPage() {
   const session = await getCurrentUser();
+  const user = session.currentUser;
+
+  if (user.role === "SUPER_ADMIN") {
+    redirect("/super-admin");
+  }
+
+  if (user.role !== "ADMIN" && user.role !== "STAFF") {
+    return <AccessDenied />;
+  }
+
+  const currentStore = await getCurrentStore();
+
+  if (!currentStore) {
+    return (
+      <div className="p-6 text-center md:p-12">
+        <div className="mx-auto max-w-md rounded-2xl border border-zinc-200 bg-white p-8 shadow-xs">
+          <h2 className="font-extrabold text-lg text-zinc-900">
+            No Store Profile Found
+          </h2>
+          <p className="mt-2 text-xs text-zinc-500 leading-relaxed">
+            Your account is not linked to an active pharmacy store. Please
+            contact your administrator or configure your store profile first.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6 p-6 md:p-10">
-      <div className="border-zinc-200 border-b pb-6">
-        <span className="font-bold text-[10px] text-zinc-500 uppercase tracking-wider">
-          POS Terminal
-        </span>
-        <h1 className="mt-1 font-extrabold text-3xl text-zinc-900 tracking-tight">
-          Billing Terminal
-        </h1>
-        <p className="mt-0.5 text-sm text-zinc-500">
-          Quick barcode scanning and invoice checkout system.
-        </p>
-      </div>
-      <div className="rounded-xl border border-zinc-200 border-dashed bg-white p-12 text-center">
-        <p className="font-semibold text-sm text-zinc-800">
-          This module is under active development.
-        </p>
-        <p className="mt-1 text-xs text-zinc-500">
-          The billing checkout terminal with item selection will be available in
-          the next step.
-        </p>
-      </div>
-    </div>
+    <BillingClient
+      currentUser={{
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      }}
+      initialStore={{
+        storeName: currentStore.storeName,
+        phone: currentStore.phone,
+        address: `${currentStore.address}, ${currentStore.city}, ${currentStore.state}`,
+        drugLicenseNumber: currentStore.drugLicenseNumber,
+        gstNumber: currentStore.gstNumber,
+      }}
+    />
   );
 }
