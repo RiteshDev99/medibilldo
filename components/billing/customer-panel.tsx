@@ -1,8 +1,19 @@
 "use client";
 
-import { Loader2, Search, Stethoscope, User, UserPlus, X } from "lucide-react";
+import {
+  Edit2,
+  Loader2,
+  Phone,
+  Search,
+  Stethoscope,
+  User,
+  UserCheck,
+  UserPlus,
+  X,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -28,48 +39,69 @@ export interface SelectedCustomer {
 interface CustomerPanelProps {
   customer: SelectedCustomer;
   onCustomerChange: (customer: SelectedCustomer) => void;
+  isModalOpen?: boolean;
+  onToggleModal?: (open: boolean) => void;
+}
+
+interface CustomerSearchResult {
+  id: string;
+  name: string;
+  phone?: string | null;
+  doctorName?: string | null;
+  creditBalance?: number;
 }
 
 export function CustomerPanel({
   customer,
   onCustomerChange,
+  isModalOpen: externalModalOpen,
+  onToggleModal,
 }: CustomerPanelProps) {
-  const [isWalkIn, setIsWalkIn] = useState(!customer.id);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [internalModalOpen, setInternalModalOpen] = useState(false);
+  const isModalOpen =
+    externalModalOpen !== undefined ? externalModalOpen : internalModalOpen;
+  const setIsModalOpen = onToggleModal || setInternalModalOpen;
 
-  // New Customer Dialog state
-  const [isNewCustomerOpen, setIsNewCustomerOpen] = useState(false);
+  // Active tab inside modal: "search" | "new"
+  const [activeTab, setActiveTab] = useState<"search" | "new">("search");
+
+  // Search state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<CustomerSearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  // New Customer state
   const [newName, setNewName] = useState("");
   const [newPhone, setNewPhone] = useState("");
   const [newDoctor, setNewDoctor] = useState("");
   const [newAddress, setNewAddress] = useState("");
   const [isCreating, setIsCreating] = useState(false);
 
-  // Search customers debounced
+  // Debounced customer search
   useEffect(() => {
-    if (!(searchQuery.trim() && isSearchOpen)) return;
+    if (!isModalOpen || !searchQuery.trim()) {
+      setSearchResults([]);
+      return;
+    }
 
     const timer = setTimeout(async () => {
       setIsSearching(true);
       try {
         const res = await searchCustomers(searchQuery);
         if (res.success && res.customers) {
-          setSearchResults(res.customers);
+          setSearchResults(res.customers as CustomerSearchResult[]);
         }
       } catch (err) {
-        console.error("Search error:", err);
+        console.error("Customer search error:", err);
       } finally {
         setIsSearching(false);
       }
-    }, 200);
+    }, 180);
 
     return () => clearTimeout(timer);
-  }, [searchQuery, isSearchOpen]);
+  }, [searchQuery, isModalOpen]);
 
-  const handleSelectCustomer = (cust: any) => {
+  const handleSelectCustomer = (cust: CustomerSearchResult) => {
     onCustomerChange({
       id: cust.id,
       name: cust.name,
@@ -77,8 +109,7 @@ export function CustomerPanel({
       doctorName: cust.doctorName || customer.doctorName || null,
       creditBalance: cust.creditBalance || 0,
     });
-    setIsWalkIn(false);
-    setIsSearchOpen(false);
+    setIsModalOpen(false);
     setSearchQuery("");
   };
 
@@ -90,7 +121,6 @@ export function CustomerPanel({
       doctorName: null,
       creditBalance: 0,
     });
-    setIsWalkIn(true);
   };
 
   const handleCreateCustomer = async (e: React.FormEvent) => {
@@ -111,8 +141,7 @@ export function CustomerPanel({
 
       if (res.success && res.customer) {
         toast.success(`Customer "${res.customer.name}" created!`);
-        handleSelectCustomer(res.customer);
-        setIsNewCustomerOpen(false);
+        handleSelectCustomer(res.customer as CustomerSearchResult);
         setNewName("");
         setNewPhone("");
         setNewDoctor("");
@@ -120,118 +149,189 @@ export function CustomerPanel({
       } else {
         toast.error(res.error || "Failed to create customer");
       }
-    } catch (err: any) {
-      toast.error(err.message || "An error occurred");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "An error occurred";
+      toast.error(msg);
     } finally {
       setIsCreating(false);
     }
   };
 
+  const isWalkIn =
+    !customer.id &&
+    (!customer.name || customer.name === "Walk-in Customer") &&
+    !customer.phone;
+
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-xs">
-      <div className="flex items-center justify-between border-zinc-100 border-b pb-3">
-        <div className="flex items-center gap-2">
-          <div className="flex size-7 items-center justify-center rounded-lg bg-zinc-100 text-zinc-600">
-            <User className="size-4" />
+    <>
+      {/* Sleek Compact Customer Bar (Saves vertical space) */}
+      <div className="flex items-center justify-between rounded-xl border border-zinc-200/90 bg-white px-3.5 py-2.5 shadow-2xs transition-all">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <div
+            className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${
+              isWalkIn
+                ? "bg-zinc-100 text-zinc-600"
+                : "bg-emerald-100 text-emerald-700"
+            }`}
+          >
+            {isWalkIn ? (
+              <User className="size-4" />
+            ) : (
+              <UserCheck className="size-4" />
+            )}
           </div>
-          <span className="font-extrabold text-xs text-zinc-900 uppercase tracking-wider">
-            Customer & Doctor Info
-          </span>
+
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="truncate font-extrabold text-xs text-zinc-900">
+                {customer.name}
+              </span>
+              {!isWalkIn && customer.id ? (
+                <Badge className="bg-emerald-600 px-1 py-0 font-bold text-[9px] text-white">
+                  Reg
+                </Badge>
+              ) : (
+                <span className="text-[10px] text-zinc-400">• Cash/UPI</span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 font-mono text-[11px] text-zinc-500">
+              {customer.phone && (
+                <span className="flex items-center gap-1">
+                  <Phone className="size-2.5" />
+                  {customer.phone}
+                </span>
+              )}
+              {customer.doctorName && (
+                <span className="flex items-center gap-1 text-zinc-400">
+                  <Stethoscope className="size-2.5" />
+                  Dr. {customer.doctorName}
+                </span>
+              )}
+              {customer.creditBalance > 0 && (
+                <span className="font-bold text-amber-700">
+                  Due: {formatINR(customer.creditBalance)}
+                </span>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* Walk-in vs Search Toggle */}
+        {/* Action Button */}
         <div className="flex items-center gap-1.5">
           {isWalkIn ? (
             <Button
-              className="h-7 font-bold text-[11px] text-emerald-700 hover:border-emerald-300 hover:bg-emerald-50"
-              onClick={() => setIsNewCustomerOpen(true)}
+              className="h-7 cursor-pointer rounded-lg border-zinc-200 font-bold text-[11px] text-zinc-700 hover:border-emerald-600 hover:bg-emerald-50 hover:text-emerald-800"
+              onClick={() => setIsModalOpen(true)}
               size="sm"
               type="button"
               variant="outline"
             >
-              <UserPlus className="mr-1 size-3" /> Add Customer
+              <UserPlus className="mr-1 size-3 text-emerald-600" />
+              Patient / Dr (F9)
             </Button>
           ) : (
-            <Button
-              className="h-7 font-bold text-[11px] text-zinc-600 hover:bg-zinc-50"
-              onClick={handleResetToWalkIn}
-              size="sm"
-              type="button"
-              variant="outline"
-            >
-              <X className="mr-1 size-3" /> Reset to Walk-in
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                className="size-7 rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
+                onClick={() => setIsModalOpen(true)}
+                size="icon"
+                title="Edit Customer Details"
+                type="button"
+                variant="ghost"
+              >
+                <Edit2 className="size-3" />
+              </Button>
+              <Button
+                className="size-7 rounded-lg text-zinc-400 hover:bg-red-50 hover:text-red-600"
+                onClick={handleResetToWalkIn}
+                size="icon"
+                title="Reset to Walk-in"
+                type="button"
+                variant="ghost"
+              >
+                <X className="size-3.5" />
+              </Button>
+            </div>
           )}
         </div>
       </div>
 
-      <div className="mt-3 space-y-3">
-        {/* If Registered Customer Selected */}
-        {!isWalkIn && customer.id ? (
-          <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 p-3">
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-extrabold text-sm text-zinc-900">
-                    {customer.name}
-                  </span>
-                  <span className="rounded bg-emerald-600 px-1.5 py-0.2 font-bold font-mono text-[9px] text-white uppercase">
-                    Registered
-                  </span>
-                </div>
-                {customer.phone && (
-                  <p className="mt-0.5 font-mono text-xs text-zinc-600">
-                    📞 {customer.phone}
-                  </p>
-                )}
-              </div>
+      {/* Customer & Doctor Selection / Registration Dialog */}
+      <Dialog onOpenChange={setIsModalOpen} open={isModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-extrabold text-base text-zinc-900">
+              Customer & Prescriber Details
+            </DialogTitle>
+            <DialogDescription className="text-xs text-zinc-500">
+              Attach a customer for invoice records, doctor prescription, or
+              credit billing.
+            </DialogDescription>
+          </DialogHeader>
 
-              {customer.creditBalance > 0 && (
-                <div className="text-right">
-                  <span className="block font-bold text-[10px] text-amber-700 uppercase">
-                    Due Balance
-                  </span>
-                  <span className="font-extrabold font-mono text-red-600 text-xs">
-                    {formatINR(customer.creditBalance)}
-                  </span>
-                </div>
-              )}
-            </div>
+          {/* Tab Selector: Existing vs New */}
+          <div className="grid grid-cols-2 gap-1 rounded-xl border border-zinc-200 bg-zinc-100/80 p-1">
+            <button
+              className={`rounded-lg py-1.5 font-bold text-xs transition-all ${
+                activeTab === "search"
+                  ? "bg-white text-zinc-900 shadow-xs"
+                  : "text-zinc-500 hover:text-zinc-900"
+              }`}
+              onClick={() => setActiveTab("search")}
+              type="button"
+            >
+              <Search className="mr-1.5 inline size-3.5" />
+              Search Existing
+            </button>
+            <button
+              className={`rounded-lg py-1.5 font-bold text-xs transition-all ${
+                activeTab === "new"
+                  ? "bg-white text-zinc-900 shadow-xs"
+                  : "text-zinc-500 hover:text-zinc-900"
+              }`}
+              onClick={() => setActiveTab("new")}
+              type="button"
+            >
+              <UserPlus className="mr-1.5 inline size-3.5" />
+              New / Quick Info
+            </button>
           </div>
-        ) : (
-          /* Walk-in inputs & Search bar */
-          <div className="space-y-2.5">
-            <div className="relative">
-              <div className="pointer-events-none absolute top-2.5 left-2.5 text-zinc-400">
-                <Search className="size-3.5" />
-              </div>
-              <Input
-                className="h-8 rounded-lg pl-8 font-medium text-xs"
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setIsSearchOpen(true);
-                }}
-                onFocus={() => setIsSearchOpen(true)}
-                placeholder="Lookup existing customer by name or phone number..."
-                value={searchQuery}
-              />
 
-              {/* Autocomplete Dropdown */}
-              {isSearchOpen && searchQuery.trim() && (
-                <div className="absolute top-full z-40 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-zinc-200 bg-white p-1 shadow-xl">
-                  {isSearching ? (
-                    <div className="flex items-center justify-center p-3 text-xs text-zinc-400">
-                      <Loader2 className="mr-1.5 size-3.5 animate-spin" />
-                      Searching...
-                    </div>
-                  ) : searchResults.length === 0 ? (
-                    <div className="p-3 text-center text-xs text-zinc-500">
-                      No customer found.
-                    </div>
-                  ) : (
-                    searchResults.map((cust) => (
+          {activeTab === "search" ? (
+            <div className="space-y-3 pt-2">
+              <div className="relative">
+                <Search className="pointer-events-none absolute top-3 left-3 size-4 text-zinc-400" />
+                <Input
+                  autoFocus
+                  className="h-10 pl-9 font-medium text-xs"
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Type name or phone number..."
+                  value={searchQuery}
+                />
+              </div>
+
+              <div className="max-h-56 min-h-[140px] overflow-y-auto rounded-xl border border-zinc-200 bg-zinc-50/50 p-1">
+                {isSearching && (
+                  <div className="flex items-center justify-center p-6 text-xs text-zinc-400">
+                    <Loader2 className="mr-2 size-4 animate-spin text-emerald-600" />
+                    Searching customers...
+                  </div>
+                )}
+
+                {!isSearching && searchResults.length === 0 && (
+                  <div className="p-6 text-center text-xs text-zinc-500">
+                    {searchQuery.trim()
+                      ? "No customer found with this search."
+                      : "Start typing name or mobile number to search."}
+                  </div>
+                )}
+
+                {!isSearching && searchResults.length > 0 && (
+                  <div className="divide-y divide-zinc-200/60">
+                    {searchResults.map((cust) => (
                       <button
-                        className="flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-left text-xs transition-colors hover:bg-emerald-50"
+                        className="flex w-full items-center justify-between rounded-lg p-2 text-left text-xs transition-colors hover:bg-emerald-50"
                         key={cust.id}
                         onClick={() => handleSelectCustomer(cust)}
                         type="button"
@@ -242,166 +342,118 @@ export function CustomerPanel({
                           </span>
                           {cust.phone && (
                             <span className="ml-2 font-mono text-zinc-500">
-                              ({cust.phone})
+                              {cust.phone}
                             </span>
                           )}
+                          {cust.doctorName && (
+                            <div className="text-[10px] text-zinc-400">
+                              Dr. {cust.doctorName}
+                            </div>
+                          )}
                         </div>
-                        {cust.creditBalance > 0 && (
-                          <span className="font-bold font-mono text-[11px] text-red-600">
+                        {cust.creditBalance && cust.creditBalance > 0 ? (
+                          <span className="font-bold font-mono text-[11px] text-amber-700">
                             Due: {formatINR(cust.creditBalance)}
                           </span>
-                        )}
+                        ) : null}
                       </button>
-                    ))
-                  )}
-                </div>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <Label className="font-bold text-[10px] text-zinc-500 uppercase">
-                  Customer / Patient Name
-                </Label>
-                <Input
-                  className="h-8 font-medium text-xs"
-                  onChange={(e) =>
-                    onCustomerChange({
-                      ...customer,
-                      name: e.target.value || "Walk-in Customer",
-                    })
-                  }
-                  placeholder="Walk-in Customer"
-                  value={
-                    customer.name === "Walk-in Customer" ? "" : customer.name
-                  }
-                />
-              </div>
-
-              <div>
-                <Label className="font-bold text-[10px] text-zinc-500 uppercase">
-                  Phone (Optional)
-                </Label>
-                <Input
-                  className="h-8 font-mono text-xs"
-                  onChange={(e) =>
-                    onCustomerChange({
-                      ...customer,
-                      phone: e.target.value,
-                    })
-                  }
-                  placeholder="10-digit mobile"
-                  value={customer.phone || ""}
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Doctor Name Field */}
-        <div>
-          <div className="flex items-center gap-1">
-            <Stethoscope className="size-3 text-zinc-400" />
-            <Label className="font-bold text-[10px] text-zinc-500 uppercase">
-              Prescribed By Doctor (Optional)
-            </Label>
-          </div>
-          <Input
-            className="mt-1 h-8 font-medium text-xs"
-            onChange={(e) =>
-              onCustomerChange({
-                ...customer,
-                doctorName: e.target.value,
-              })
-            }
-            placeholder="e.g. Dr. A. K. Sharma (MBBS)"
-            value={customer.doctorName || ""}
-          />
-        </div>
-      </div>
-
-      {/* Inline Create Customer Dialog */}
-      <Dialog onOpenChange={setIsNewCustomerOpen} open={isNewCustomerOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="font-bold text-base">
-              Register New Customer
-            </DialogTitle>
-            <DialogDescription className="text-xs">
-              Save customer details for invoice tracking and credit records.
-            </DialogDescription>
-          </DialogHeader>
-
-          <form className="space-y-3 pt-2" onSubmit={handleCreateCustomer}>
-            <div className="space-y-1">
-              <Label className="font-semibold text-xs">Full Name *</Label>
-              <Input
-                autoFocus
-                className="text-xs"
-                onChange={(e) => setNewName(e.target.value)}
-                placeholder="e.g. Rahul Verma"
-                required
-                value={newName}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1">
-                <Label className="font-semibold text-xs">Phone Number</Label>
-                <Input
-                  className="font-mono text-xs"
-                  onChange={(e) => setNewPhone(e.target.value)}
-                  placeholder="9876543210"
-                  value={newPhone}
-                />
-              </div>
-
-              <div className="space-y-1">
-                <Label className="font-semibold text-xs">Doctor Name</Label>
-                <Input
-                  className="text-xs"
-                  onChange={(e) => setNewDoctor(e.target.value)}
-                  placeholder="Dr. Sharma"
-                  value={newDoctor}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <Label className="font-semibold text-xs">Address / Notes</Label>
-              <Input
-                className="text-xs"
-                onChange={(e) => setNewAddress(e.target.value)}
-                placeholder="City, locality, etc."
-                value={newAddress}
-              />
-            </div>
-
-            <DialogFooter className="pt-2">
-              <Button
-                className="text-xs"
-                onClick={() => setIsNewCustomerOpen(false)}
-                size="sm"
-                type="button"
-                variant="outline"
-              >
-                Cancel
-              </Button>
-              <Button
-                className="bg-emerald-600 font-bold text-white text-xs hover:bg-emerald-700"
-                disabled={isCreating}
-                size="sm"
-                type="submit"
-              >
-                {isCreating && (
-                  <Loader2 className="mr-1.5 size-3.5 animate-spin" />
+                    ))}
+                  </div>
                 )}
-                Save Customer
-              </Button>
-            </DialogFooter>
-          </form>
+              </div>
+
+              <DialogFooter className="flex-row items-center justify-between border-zinc-100 border-t pt-2">
+                <Button
+                  onClick={handleResetToWalkIn}
+                  size="sm"
+                  type="button"
+                  variant="ghost"
+                >
+                  Clear to Walk-in
+                </Button>
+                <Button
+                  onClick={() => setIsModalOpen(false)}
+                  size="sm"
+                  type="button"
+                  variant="outline"
+                >
+                  Done
+                </Button>
+              </DialogFooter>
+            </div>
+          ) : (
+            <form className="space-y-3 pt-2" onSubmit={handleCreateCustomer}>
+              <div className="space-y-1">
+                <Label className="font-semibold text-xs">Customer Name *</Label>
+                <Input
+                  autoFocus
+                  className="h-9 text-xs"
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="e.g. Rajesh Kumar"
+                  required
+                  value={newName}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <Label className="font-semibold text-xs">Mobile Number</Label>
+                  <Input
+                    className="h-9 font-mono text-xs"
+                    onChange={(e) => setNewPhone(e.target.value)}
+                    placeholder="10-digit mobile"
+                    value={newPhone}
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="font-semibold text-xs">Doctor Name</Label>
+                  <Input
+                    className="h-9 text-xs"
+                    onChange={(e) => setNewDoctor(e.target.value)}
+                    placeholder="e.g. Dr. Verma"
+                    value={newDoctor}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <Label className="font-semibold text-xs">
+                  Address (Optional)
+                </Label>
+                <Input
+                  className="h-9 text-xs"
+                  onChange={(e) => setNewAddress(e.target.value)}
+                  placeholder="Locality / Area"
+                  value={newAddress}
+                />
+              </div>
+
+              <DialogFooter className="border-zinc-100 border-t pt-2">
+                <Button
+                  onClick={() => setIsModalOpen(false)}
+                  size="sm"
+                  type="button"
+                  variant="outline"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="bg-emerald-600 font-bold text-white text-xs hover:bg-emerald-700"
+                  disabled={isCreating}
+                  size="sm"
+                  type="submit"
+                >
+                  {isCreating && (
+                    <Loader2 className="mr-1.5 size-3.5 animate-spin" />
+                  )}
+                  Save & Select Customer
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }

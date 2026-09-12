@@ -306,87 +306,102 @@ export function BillingClient({
   }, []);
 
   // Checkout and Save Bill
-  const handleCheckout = async (printInvoice: boolean) => {
-    if (items.length === 0) {
-      toast.error("Cart is empty. Please add items to bill.");
-      return;
-    }
-
-    if (hasInsufficientStock) {
-      toast.error(
-        "Some items exceed available batch stock. Please adjust quantities."
-      );
-      return;
-    }
-
-    if (
-      paymentMode === "CREDIT" &&
-      !customer.id &&
-      (!customer.name ||
-        customer.name === "Walk-in Customer" ||
-        !customer.phone)
-    ) {
-      toast.error(
-        "Please identify a registered customer or provide a mobile number for Credit sales."
-      );
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const res = await createInvoice({
-        items: items.map((it) => ({
-          medicineId: it.medicine.id,
-          batchId: it.batch.id,
-          quantity: it.quantity,
-          isPack: it.isPack,
-          discountPercent: it.discountPercent,
-          customRate: it.customRate,
-        })),
-        customerId: customer.id,
-        customerName: customer.name,
-        customerPhone: customer.phone,
-        doctorName: customer.doctorName,
-        paymentMode,
-        amountReceived:
-          paymentMode === "CASH"
-            ? amountReceived || summary.grandTotal
-            : summary.grandTotal,
-        overallDiscountPercent,
-      });
-
-      if (res.success && res.invoiceId) {
-        toast.success(`Bill #${res.invoiceNumber} created successfully!`);
-
-        // Fetch full bill details for receipt view/printing
-        const invDetails = await getInvoiceById(res.invoiceId);
-        if (invDetails.success && invDetails.invoice) {
-          setReceiptData({
-            invoice: invDetails.invoice as any,
-            items: (invDetails.items || []) as any,
-            store: invDetails.store as any,
-            cashierName: invDetails.cashier || currentUser.name,
-          });
-          setAutoPrintReceipt(printInvoice);
-          setIsReceiptOpen(true);
-        }
-
-        // Reset the active bill screen
-        setItems([]);
-        setAmountReceived(0);
-      } else {
-        toast.error(res.error || "Failed to create invoice");
+  const handleCheckout = useCallback(
+    async (printInvoice: boolean) => {
+      if (items.length === 0) {
+        toast.error("Cart is empty. Please add items to bill.");
+        return;
       }
-    } catch (err: any) {
-      toast.error(
-        err.message || "An unexpected error occurred during billing."
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
-  // Keyboard shortcuts (F2: search, F4: checkout, F8: new bill)
+      if (hasInsufficientStock) {
+        toast.error(
+          "Some items exceed available batch stock. Please adjust quantities."
+        );
+        return;
+      }
+
+      if (
+        paymentMode === "CREDIT" &&
+        !customer.id &&
+        (!customer.name ||
+          customer.name === "Walk-in Customer" ||
+          !customer.phone)
+      ) {
+        toast.error(
+          "Please identify a registered customer or provide a mobile number for Credit sales."
+        );
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const res = await createInvoice({
+          items: items.map((it) => ({
+            medicineId: it.medicine.id,
+            batchId: it.batch.id,
+            quantity: it.quantity,
+            isPack: it.isPack,
+            discountPercent: it.discountPercent,
+            customRate: it.customRate,
+          })),
+          customerId: customer.id,
+          customerName: customer.name,
+          customerPhone: customer.phone,
+          doctorName: customer.doctorName,
+          paymentMode,
+          amountReceived:
+            paymentMode === "CASH"
+              ? amountReceived || summary.grandTotal
+              : summary.grandTotal,
+          overallDiscountPercent,
+        });
+
+        if (res.success && res.invoiceId) {
+          toast.success(`Bill #${res.invoiceNumber} created successfully!`);
+
+          // Fetch full bill details for receipt view/printing
+          const invDetails = await getInvoiceById(res.invoiceId);
+          if (invDetails.success && invDetails.invoice) {
+            setReceiptData({
+              invoice: invDetails.invoice as any,
+              items: (invDetails.items || []) as any,
+              store: invDetails.store as any,
+              cashierName: invDetails.cashier || currentUser.name,
+            });
+            setAutoPrintReceipt(printInvoice);
+            setIsReceiptOpen(true);
+          }
+
+          // Reset the active bill screen
+          setItems([]);
+          setAmountReceived(0);
+        } else {
+          toast.error(res.error || "Failed to create invoice");
+        }
+      } catch (err: any) {
+        toast.error(
+          err.message || "An unexpected error occurred during billing."
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [
+      items,
+      hasInsufficientStock,
+      paymentMode,
+      customer,
+      amountReceived,
+      summary.grandTotal,
+      overallDiscountPercent,
+      currentUser.name,
+    ]
+  );
+
+  // Customer modal state for F9 shortcut
+  const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
+
+  // Keyboard shortcuts (F2: search, F4: checkout, F8: new bill, F9: customer)
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       if (
@@ -403,6 +418,9 @@ export function BillingClient({
       } else if (e.key === "F8") {
         e.preventDefault();
         handleResetBill();
+      } else if (e.key === "F9") {
+        e.preventDefault();
+        setIsCustomerModalOpen((prev) => !prev);
       }
     };
 
@@ -417,20 +435,20 @@ export function BillingClient({
   ]);
 
   return (
-    <div className="space-y-4 p-4 md:p-6 lg:p-8">
-      {/* Top Bar: Pharmacy Store Name, Clock, User Info */}
-      <div className="flex flex-col justify-between gap-3 rounded-xl border border-zinc-200 bg-white px-5 py-3 shadow-2xs sm:flex-row sm:items-center">
-        <div className="flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-zinc-900 text-white shadow-xs">
-            <Store className="size-5" />
+    <div className="space-y-3.5 p-3 sm:p-5 lg:p-6">
+      {/* Top Header: Store POS Branding + Clock + Quick New Bill */}
+      <div className="flex flex-col justify-between gap-2.5 rounded-2xl border border-zinc-200/90 bg-white px-4 py-2.5 shadow-2xs sm:flex-row sm:items-center">
+        <div className="flex items-center gap-2.5">
+          <div className="flex size-9 items-center justify-center rounded-xl bg-zinc-900 text-white shadow-xs">
+            <Store className="size-4 text-emerald-400" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="font-extrabold text-base text-zinc-900 tracking-tight">
+            <div className="flex items-center gap-1.5">
+              <h1 className="font-black text-sm text-zinc-900 tracking-tight sm:text-base">
                 {initialStore.storeName}
               </h1>
-              <span className="rounded-full bg-emerald-100 px-2 py-0.2 font-bold font-mono text-[10px] text-emerald-800">
-                POS Terminal
+              <span className="rounded-full bg-emerald-100 px-2 py-0.2 font-extrabold font-mono text-[10px] text-emerald-800">
+                POS
               </span>
             </div>
             <p className="text-[11px] text-zinc-500">
@@ -442,25 +460,35 @@ export function BillingClient({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-4 text-xs">
-          <div className="flex items-center gap-1.5 text-zinc-500">
-            <Clock className="size-3.5" />
-            <span className="font-mono">
-              {currentTime || "Loading time..."}
-            </span>
+        <div className="flex flex-wrap items-center gap-3 text-xs">
+          <div className="flex items-center gap-1.5 font-mono text-[11px] text-zinc-500">
+            <Clock className="size-3.5 text-zinc-400" />
+            <span>{currentTime || "Loading..."}</span>
           </div>
 
-          <div className="flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 py-1">
-            <UserCheck className="size-3.5 text-emerald-600" />
+          <div className="flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-[11px]">
+            <UserCheck className="size-3 text-emerald-600" />
             <span className="text-zinc-600">
               Cashier:{" "}
               <strong className="text-zinc-900">{currentUser.name}</strong>
             </span>
           </div>
+
+          {/* Quick Clear / Reset Bill Button */}
+          {items.length > 0 && (
+            <button
+              className="rounded-lg border border-zinc-200 bg-white px-2 py-1 font-bold text-[11px] text-zinc-600 hover:bg-zinc-50 hover:text-red-600"
+              onClick={handleResetBill}
+              title="Reset Bill (F8)"
+              type="button"
+            >
+              Reset (F8)
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Main Barcode & Medicine Search Bar */}
+      {/* Main Barcode & Medicine Search Bar with Direct Qty Stepper */}
       <div>
         <MedicineSearch
           inputRef={searchInputRef}
@@ -468,13 +496,14 @@ export function BillingClient({
         />
       </div>
 
-      {/* Two Column Layout: Left (Cart Table), Right (Customer & Payment) */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+      {/* Two Column POS Layout: Left (Cart Table), Right (Customer & Sticky Payment) */}
+      <div className="grid grid-cols-1 gap-3.5 lg:grid-cols-12">
         {/* Left 8 Cols: Cart Items */}
-        <div className="space-y-4 lg:col-span-8">
+        <div className="space-y-3 lg:col-span-8">
           <CartTable
             items={items}
             onClearCart={handleResetBill}
+            onFocusSearch={() => searchInputRef.current?.focus()}
             onRemoveItem={handleRemoveItem}
             onToggleUnit={handleToggleUnit}
             onUpdateBatch={handleUpdateBatch}
@@ -483,9 +512,14 @@ export function BillingClient({
           />
         </div>
 
-        {/* Right 4 Cols: Customer & Payment Sidebar */}
-        <div className="space-y-4 lg:col-span-4">
-          <CustomerPanel customer={customer} onCustomerChange={setCustomer} />
+        {/* Right 4 Cols: Compact Customer Bar & Sticky Payment Box */}
+        <div className="space-y-3 lg:sticky lg:top-4 lg:col-span-4">
+          <CustomerPanel
+            customer={customer}
+            isModalOpen={isCustomerModalOpen}
+            onCustomerChange={setCustomer}
+            onToggleModal={setIsCustomerModalOpen}
+          />
 
           <PaymentPanel
             amountReceived={amountReceived}
@@ -499,6 +533,7 @@ export function BillingClient({
             isLoading={isLoading}
             onAmountReceivedChange={setAmountReceived}
             onCheckout={handleCheckout}
+            onOpenCustomerModal={() => setIsCustomerModalOpen(true)}
             onOverallDiscountChange={setOverallDiscountPercent}
             onPaymentModeChange={setPaymentMode}
             overallDiscountPercent={overallDiscountPercent}
@@ -506,6 +541,40 @@ export function BillingClient({
             summary={summary}
           />
         </div>
+      </div>
+
+      {/* POS Quick Keyboard Guide (Footer) */}
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-zinc-200/80 bg-zinc-50/80 px-4 py-2 text-[11px] text-zinc-500">
+        <div className="flex flex-wrap items-center gap-4">
+          <span className="flex items-center gap-1.5">
+            <kbd className="rounded border border-zinc-300 bg-white px-1.5 py-0.5 font-bold font-mono text-[10px] text-zinc-700 shadow-2xs">
+              F2
+            </kbd>
+            <span>Search Medicine</span>
+          </span>
+          <span className="flex items-center gap-1.5">
+            <kbd className="rounded border border-zinc-300 bg-white px-1.5 py-0.5 font-bold font-mono text-[10px] text-zinc-700 shadow-2xs">
+              F4
+            </kbd>
+            <span>Save & Print</span>
+          </span>
+          <span className="flex items-center gap-1.5">
+            <kbd className="rounded border border-zinc-300 bg-white px-1.5 py-0.5 font-bold font-mono text-[10px] text-zinc-700 shadow-2xs">
+              F8
+            </kbd>
+            <span>New Bill</span>
+          </span>
+          <span className="flex items-center gap-1.5">
+            <kbd className="rounded border border-zinc-300 bg-white px-1.5 py-0.5 font-bold font-mono text-[10px] text-zinc-700 shadow-2xs">
+              F9
+            </kbd>
+            <span>Customer / Dr</span>
+          </span>
+        </div>
+
+        <span className="hidden font-medium text-[10px] text-zinc-400 md:inline-block">
+          MediBillDo POS • High Speed Pharmacy Billing
+        </span>
       </div>
 
       {/* Invoice Printable Receipt Modal */}
