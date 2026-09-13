@@ -24,7 +24,6 @@ import {
   MedicineForm,
   type MedicineFormValues,
 } from "@/components/forms/medicine-form";
-import { InventorySummaryCards } from "@/components/medicines/inventory-summary-cards";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -314,13 +313,6 @@ export function MedicinesClient({
           </Button>
         )}
       </div>
-
-      {/* Dashboard Summary Cards */}
-      <InventorySummaryCards
-        counts={counts}
-        activeTab={activeTab}
-        onSelectTab={setActiveTab}
-      />
 
       {/* Inventory Status Tabs */}
       <div className="flex select-none gap-2 overflow-x-auto border-zinc-200 border-b pb-px font-semibold text-xs text-zinc-500">
