@@ -34,13 +34,13 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-zinc-50/50 md:flex-row">
+    <div className="flex min-h-screen flex-col bg-zinc-50/50 md:flex-row w-full max-w-full overflow-x-hidden">
       <DashboardSidebar
         storeName={currentStore?.storeName}
         user={{ name: user.name, email: user.email, role: user.role }}
       />
-      <main className="min-h-screen flex-1 md:pl-64">
-        <div className="w-full">{children}</div>
+      <main className="min-h-screen flex-1 min-w-0 w-full md:pl-64 overflow-x-hidden">
+        <div className="w-full min-w-0">{children}</div>
       </main>
 
       {isAdmin && hasNoStore && <CreateStoreDialog isOpen={true} />}

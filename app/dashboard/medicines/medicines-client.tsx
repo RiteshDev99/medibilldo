@@ -288,7 +288,7 @@ export function MedicinesClient({
   };
 
   return (
-    <div className="min-h-screen space-y-6 bg-zinc-50/50 p-6 text-zinc-950 md:p-10">
+    <div className="min-h-screen space-y-6 bg-zinc-50/50 p-4 sm:p-6 md:p-8 text-zinc-950 w-full max-w-full min-w-0">
       {/* Title & Top Header */}
       <div className="flex flex-col gap-4 border-zinc-200 border-b pb-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -482,7 +482,7 @@ export function MedicinesClient({
       </div>
 
       {/* Medicines Table */}
-      <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xs">
+      <div className="w-full min-w-0 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xs">
         {filteredMedicines.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-12 text-center">
             <Pill className="mb-3 size-12 stroke-[1.5] text-zinc-300" />
@@ -505,8 +505,8 @@ export function MedicinesClient({
             )}
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <Table>
+          <div className="w-full min-w-0 overflow-x-auto">
+            <Table className="w-full min-w-[1000px] whitespace-nowrap">
               <TableHeader className="bg-zinc-50/70 border-b border-zinc-200">
                 <TableRow>
                   <TableHead className="py-3 font-bold text-[10px] text-zinc-500 uppercase tracking-wider">
