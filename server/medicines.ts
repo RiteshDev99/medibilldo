@@ -3,8 +3,12 @@
 import { and, desc, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db/drizzle";
-import { audit, medicine, store } from "@/db/schema";
+import { audit, medicine, medicineBatch, store, type Medicine, type MedicineBatch } from "@/db/schema";
 import { getCurrentUser } from "./users";
+
+export type MedicineWithBatches = Medicine & {
+  batches: MedicineBatch[];
+};
 
 async function logAudit(action: string, storeId: string, performedBy: string) {
   try {
@@ -24,7 +28,11 @@ async function logAudit(action: string, storeId: string, performedBy: string) {
   }
 }
 
-export async function getMedicines() {
+export async function getMedicines(): Promise<{
+  success: boolean;
+  data?: MedicineWithBatches[];
+  error?: string;
+}> {
   try {
     const session = await getCurrentUser();
     const currentUser = session.currentUser;
@@ -38,7 +46,30 @@ export async function getMedicines() {
       where: eq(medicine.storeId, currentUser.storeId),
       orderBy: [desc(medicine.createdAt)],
     });
-    return { success: true, data };
+
+    if (data.length === 0) {
+      return { success: true, data: [] };
+    }
+
+    // Fetch batches for this store
+    const batches = await db.query.medicineBatch.findMany({
+      where: eq(medicineBatch.storeId, currentUser.storeId),
+      orderBy: [medicineBatch.expiryDate],
+    });
+
+    const batchesByMedId = new Map<string, MedicineBatch[]>();
+    for (const batch of batches) {
+      const list = batchesByMedId.get(batch.medicineId) || [];
+      list.push(batch);
+      batchesByMedId.set(batch.medicineId, list);
+    }
+
+    const medicinesWithBatches: MedicineWithBatches[] = data.map((med) => ({
+      ...med,
+      batches: batchesByMedId.get(med.id) || [],
+    }));
+
+    return { success: true, data: medicinesWithBatches };
   } catch (error) {
     console.error("Failed to get medicines:", error);
     return { success: false, error: "Failed to fetch medicines" };
