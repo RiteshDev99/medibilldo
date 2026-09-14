@@ -196,6 +196,23 @@ export async function searchCustomers(query: string) {
 }
 
 /**
+ * Fetches all customers for the store directory.
+ */
+export async function getAllStoreCustomers() {
+  try {
+    const { storeId } = await getBillingContext();
+    const customers = await db.query.customer.findMany({
+      where: eq(customer.storeId, storeId),
+      orderBy: [desc(customer.createdAt)],
+    });
+    return { success: true, customers };
+  } catch (error) {
+    console.error("Error in getAllStoreCustomers:", error);
+    return { success: false, error: (error as Error).message, customers: [] };
+  }
+}
+
+/**
  * Creates a customer profile for billing records or credit/Udhar tracking.
  */
 export async function createCustomer(rawData: CustomerInput) {

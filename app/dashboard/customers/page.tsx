@@ -1,29 +1,40 @@
+import { redirect } from "next/navigation";
+import { AccessDenied } from "@/components/access-denied";
+import { getAllStoreCustomers } from "@/server/billing";
+import { getCurrentStore } from "@/server/store";
 import { getCurrentUser } from "@/server/users";
+import { CustomersClient } from "./customers-client";
 
 export default async function CustomersPage() {
   const session = await getCurrentUser();
+  const user = session.currentUser;
 
-  return (
-    <div className="space-y-6 p-6 md:p-10">
-      <div className="border-zinc-200 border-b pb-6">
-        <span className="font-bold text-[10px] text-zinc-500 uppercase tracking-wider">
-          Accounts Directory
-        </span>
-        <h1 className="mt-1 font-extrabold text-3xl text-zinc-900 tracking-tight">
-          Customers
-        </h1>
-        <p className="mt-0.5 text-sm text-zinc-500">
-          Manage customer directory, view purchase histories, and invoices.
-        </p>
+  if (user.role === "SUPER_ADMIN") {
+    redirect("/super-admin");
+  }
+
+  if (user.role !== "ADMIN" && user.role !== "STAFF") {
+    return <AccessDenied />;
+  }
+
+  const currentStore = await getCurrentStore();
+  if (!currentStore) {
+    return (
+      <div className="p-6 text-center md:p-12">
+        <div className="mx-auto max-w-md rounded-2xl border border-zinc-200 bg-white p-8 shadow-xs">
+          <h2 className="font-extrabold text-lg text-zinc-900">
+            No Store Profile Found
+          </h2>
+          <p className="mt-2 text-xs text-zinc-500 leading-relaxed">
+            Your account is not linked to an active pharmacy store.
+          </p>
+        </div>
       </div>
-      <div className="rounded-xl border border-zinc-200 border-dashed bg-white p-12 text-center">
-        <p className="font-semibold text-sm text-zinc-800">
-          This module is under active development.
-        </p>
-        <p className="mt-1 text-xs text-zinc-500">
-          Customer directories and credit ledger ledgers will be available soon.
-        </p>
-      </div>
-    </div>
-  );
+    );
+  }
+
+  const res = await getAllStoreCustomers();
+  const customers = res.success && res.customers ? res.customers : [];
+
+  return <CustomersClient initialCustomers={customers} />;
 }

@@ -1,8 +1,5 @@
-import { and, desc, eq } from "drizzle-orm";
 import { AccessDenied } from "@/components/access-denied";
-import { db } from "@/db/drizzle";
-import type { User as DbUser } from "@/db/schema";
-import { user as userTable } from "@/db/schema";
+import { getStaffManagementData } from "@/server/dashboard";
 import { getCurrentStore } from "@/server/store";
 import { getCurrentUser } from "@/server/users";
 import { StaffClient } from "./staff-client";
@@ -29,16 +26,7 @@ export default async function StaffPage() {
     );
   }
 
-  // Fetch all staff members linked to this store
-  const staffList = await db.query.user.findMany({
-    where: and(
-      eq(userTable.storeId, currentStore.id),
-      eq(userTable.role, "STAFF")
-    ),
-    orderBy: [desc(userTable.createdAt)],
-  });
+  const staffData = await getStaffManagementData(currentStore.id);
 
-  const staffMembers: DbUser[] = staffList || [];
-
-  return <StaffClient initialStaff={staffMembers} />;
+  return <StaffClient initialData={staffData} />;
 }

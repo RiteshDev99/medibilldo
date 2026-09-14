@@ -9,6 +9,7 @@ import {
   invoiceItem,
   medicine,
   medicineBatch,
+  user as userTable,
 } from "@/db/schema";
 
 export interface ChartDataPoint {
@@ -59,10 +60,44 @@ export interface AdminDashboardData {
   recentSales: Invoice[];
 }
 
+export interface StaffPaymentSummary {
+  cash: number;
+  upi: number;
+  card: number;
+  credit: number;
+}
+
 export interface StaffDashboardData {
   myBillsToday: number;
   mySalesToday: number;
+  averageBillAmount: number;
+  paymentsToday: StaffPaymentSummary;
+  shiftHourlyBuckets: ChartDataPoint[];
+  counterStockAlerts: StockAlertItem[];
+  counterExpiryAlerts: ExpiryAlertItem[];
   myRecentBills: Invoice[];
+}
+
+export interface StaffPerformanceItem {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  role: string;
+  createdAt: Date;
+  todayBills: number;
+  todaySales: number;
+  lifetimeBills: number;
+  lifetimeSales: number;
+  lastActive: Date | null;
+}
+
+export interface StaffManagementData {
+  totalStaff: number;
+  todayStaffSales: number;
+  todayStaffBills: number;
+  topPerformerName: string | null;
+  staffList: StaffPerformanceItem[];
 }
 
 function getStartOfDay(d: Date = new Date()): Date {
@@ -494,29 +529,150 @@ export async function getStaffDashboardData(
   const todayStart = getStartOfDay(now);
   const todayEnd = getEndOfDay(now);
 
-  const [todayStaffInvoices, recentStaffInvoices] = await Promise.all([
-    db.query.invoice.findMany({
-      where: and(
-        eq(invoice.storeId, storeId),
-        eq(invoice.createdBy, userId),
-        gte(invoice.createdAt, todayStart),
-        lte(invoice.createdAt, todayEnd)
-      ),
-      orderBy: [desc(invoice.createdAt)],
+  const [todayStaffInvoices, recentStaffInvoices, inventoryAlerts] =
+    await Promise.all([
+      db.query.invoice.findMany({
+        where: and(
+          eq(invoice.storeId, storeId),
+          eq(invoice.createdBy, userId),
+          gte(invoice.createdAt, todayStart),
+          lte(invoice.createdAt, todayEnd)
+        ),
+        orderBy: [desc(invoice.createdAt)],
+      }),
+      db.query.invoice.findMany({
+        where: and(eq(invoice.storeId, storeId), eq(invoice.createdBy, userId)),
+        orderBy: [desc(invoice.createdAt)],
+        limit: 10,
+      }),
+      fetchInventoryAlerts(storeId, now),
+    ]);
+
+  const myBillsToday = todayStaffInvoices.length;
+  const mySalesToday = todayStaffInvoices.reduce(
+    (sum, inv) => sum + (inv.grandTotal || 0),
+    0
+  );
+  const averageBillAmount =
+    myBillsToday > 0 ? Math.round(mySalesToday / myBillsToday) : 0;
+
+  // Breakdown by payment mode for shift cash drawer reconciliation
+  let cash = 0;
+  let upi = 0;
+  let card = 0;
+  let credit = 0;
+
+  for (const inv of todayStaffInvoices) {
+    const amt = inv.grandTotal || 0;
+    if (inv.paymentMode === "CASH") {
+      cash += amt;
+    } else if (inv.paymentMode === "UPI") {
+      upi += amt;
+    } else if (inv.paymentMode === "CARD") {
+      card += amt;
+    } else if (inv.paymentMode === "CREDIT") {
+      credit += amt;
+    }
+  }
+
+  const shiftHourlyBuckets = buildTodayChartSeries(todayStaffInvoices);
+
+  return {
+    myBillsToday,
+    mySalesToday,
+    averageBillAmount,
+    paymentsToday: { cash, upi, card, credit },
+    shiftHourlyBuckets,
+    counterStockAlerts: inventoryAlerts.stockAlerts.slice(0, 4),
+    counterExpiryAlerts: inventoryAlerts.expiryAlerts.slice(0, 4),
+    myRecentBills: recentStaffInvoices,
+  };
+}
+
+export async function getStaffManagementData(
+  storeId: string
+): Promise<StaffManagementData> {
+  const now = new Date();
+  const todayStart = getStartOfDay(now);
+  const todayEnd = getEndOfDay(now);
+
+  const [staffUsers, storeInvoices] = await Promise.all([
+    db.query.user.findMany({
+      where: and(eq(userTable.storeId, storeId), eq(userTable.role, "STAFF")),
+      orderBy: [desc(userTable.createdAt)],
     }),
     db.query.invoice.findMany({
-      where: and(eq(invoice.storeId, storeId), eq(invoice.createdBy, userId)),
+      where: eq(invoice.storeId, storeId),
       orderBy: [desc(invoice.createdAt)],
-      limit: 6,
     }),
   ]);
 
-  return {
-    myBillsToday: todayStaffInvoices.length,
-    mySalesToday: todayStaffInvoices.reduce(
+  let todayStaffSales = 0;
+  let todayStaffBills = 0;
+  let topSalesAmount = 0;
+  let topPerformerName: string | null = null;
+
+  const staffList: StaffPerformanceItem[] = staffUsers.map((member) => {
+    const memberInvoices = storeInvoices.filter(
+      (inv) => inv.createdBy === member.id
+    );
+
+    const lifetimeBills = memberInvoices.length;
+    const lifetimeSales = memberInvoices.reduce(
       (sum, inv) => sum + (inv.grandTotal || 0),
       0
-    ),
-    myRecentBills: recentStaffInvoices,
+    );
+
+    const todayInvoices = memberInvoices.filter((inv) => {
+      const invDate = new Date(inv.createdAt);
+      return invDate >= todayStart && invDate <= todayEnd;
+    });
+
+    const todayBills = todayInvoices.length;
+    const todaySales = todayInvoices.reduce(
+      (sum, inv) => sum + (inv.grandTotal || 0),
+      0
+    );
+
+    todayStaffSales += todaySales;
+    todayStaffBills += todayBills;
+
+    if (todaySales > topSalesAmount) {
+      topSalesAmount = todaySales;
+      topPerformerName = member.name;
+    }
+
+    const lastActive =
+      memberInvoices.length > 0 ? new Date(memberInvoices[0].createdAt) : null;
+
+    return {
+      id: member.id,
+      name: member.name,
+      email: member.email,
+      phone: null,
+      role: member.role,
+      createdAt: member.createdAt,
+      todayBills,
+      todaySales,
+      lifetimeBills,
+      lifetimeSales,
+      lastActive,
+    };
+  });
+
+  // Sort staff members by today's sales DESC, then lifetime sales DESC
+  staffList.sort((a, b) => {
+    if (b.todaySales !== a.todaySales) {
+      return b.todaySales - a.todaySales;
+    }
+    return b.lifetimeSales - a.lifetimeSales;
+  });
+
+  return {
+    totalStaff: staffUsers.length,
+    todayStaffSales,
+    todayStaffBills,
+    topPerformerName,
+    staffList,
   };
 }

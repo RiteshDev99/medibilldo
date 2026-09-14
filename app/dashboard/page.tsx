@@ -1,22 +1,27 @@
 import {
   AlertTriangle,
   ArrowUpRight,
+  Banknote,
   Building2,
   CheckCircle2,
   Clock,
+  CreditCard,
   PackageCheck,
   Percent,
+  Pill,
   Plus,
   ReceiptText,
   ShoppingBag,
   TrendingDown,
   TrendingUp,
   Users,
+  Wallet,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SalesOverviewChart } from "@/components/dashboard/sales-overview-chart";
+import { StaffRecentBills } from "@/components/dashboard/staff-recent-bills";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -464,9 +469,14 @@ function AdminDashboardView({ data }: { data: AdminDashboardData }) {
 }
 
 function StaffDashboardView({ data }: { data: StaffDashboardData }) {
+  const totalReceived =
+    data.paymentsToday.cash + data.paymentsToday.upi + data.paymentsToday.card;
+
   return (
-    <div className="fade-in animate-in space-y-6 duration-300">
-      <div className="grid gap-4 sm:grid-cols-2">
+    <div className="fade-in animate-in space-y-8 duration-300">
+      {/* 4 Shift Performance KPIs */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Shift Bills */}
         <Card className="border-zinc-200 bg-white shadow-xs transition-all duration-200 hover:border-zinc-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <span className="font-bold text-xs text-zinc-500 uppercase tracking-wider">
@@ -475,13 +485,14 @@ function StaffDashboardView({ data }: { data: StaffDashboardData }) {
             <ReceiptText className="size-4 text-zinc-400" />
           </CardHeader>
           <CardContent>
-            <div className="font-extrabold text-3xl">{data.myBillsToday}</div>
+            <div className="font-extrabold text-2xl">{data.myBillsToday}</div>
             <p className="mt-1 text-[10px] text-zinc-500">
-              Invoices issued during current shift
+              Invoices generated during current shift
             </p>
           </CardContent>
         </Card>
 
+        {/* Shift Sales */}
         <Card className="border-zinc-200 bg-white shadow-xs transition-all duration-200 hover:border-zinc-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <span className="font-bold text-xs text-zinc-500 uppercase tracking-wider">
@@ -490,92 +501,322 @@ function StaffDashboardView({ data }: { data: StaffDashboardData }) {
             <TrendingUp className="size-4 text-zinc-400" />
           </CardHeader>
           <CardContent>
-            <div className="font-extrabold text-3xl">
+            <div className="font-extrabold text-2xl">
               ₹{data.mySalesToday.toLocaleString("en-IN")}
             </div>
             <p className="mt-1 font-semibold text-[10px] text-emerald-600">
               {data.myBillsToday > 0
-                ? "Active sales session recorded"
-                : "Ready for billing"}
+                ? "Active counter session"
+                : "Terminal ready"}
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Avg Ticket Size */}
+        <Card className="border-zinc-200 bg-white shadow-xs transition-all duration-200 hover:border-zinc-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <span className="font-bold text-xs text-zinc-500 uppercase tracking-wider">
+              Avg. Ticket Value
+            </span>
+            <Wallet className="size-4 text-zinc-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="font-extrabold text-2xl">
+              ₹{data.averageBillAmount.toLocaleString("en-IN")}
+            </div>
+            <p className="mt-1 text-[10px] text-zinc-500">
+              {data.myBillsToday > 0
+                ? "Average per customer bill"
+                : "Awaiting first invoice"}
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Credit / Udhar */}
+        <Card className="border-zinc-200 bg-white shadow-xs transition-all duration-200 hover:border-zinc-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <span className="font-bold text-xs text-zinc-500 uppercase tracking-wider">
+              Credit (Udhar) Billed
+            </span>
+            <CreditCard className="size-4 text-amber-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="font-extrabold text-2xl text-zinc-900">
+              ₹{data.paymentsToday.credit.toLocaleString("en-IN")}
+            </div>
+            <p className="mt-1 text-[10px] text-amber-700">
+              Recorded under customer ledger
             </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Prominent Action Area */}
-      <Link href="/dashboard/billing">
-        <div className="group flex cursor-pointer flex-col items-start justify-between gap-6 rounded-xl border border-zinc-900 bg-zinc-950 p-8 text-white shadow-md transition-all duration-200 hover:scale-[1.005] hover:bg-zinc-900 active:scale-[0.995] sm:flex-row sm:items-center">
-          <div>
-            <h3 className="mb-1 font-extrabold text-xl tracking-tight">
-              Create Customer Invoice
-            </h3>
-            <p className="max-w-md text-sm text-zinc-400">
-              Open the billing terminal to scan barcodes, lookup medicine
-              inventory, and record payments (Cash/UPI/Card) instantly.
-            </p>
+      {/* Cash Drawer & Shift Payment Mode Breakdown */}
+      <Card className="border-zinc-200 bg-white shadow-xs">
+        <CardHeader className="border-zinc-100 border-b pb-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2 font-extrabold text-base text-zinc-900 tracking-tight">
+                <Banknote className="size-4 text-emerald-600" />
+                Shift Payment Reconciliation & Cash Drawer
+              </CardTitle>
+              <CardDescription>
+                Summary of collections by payment method for cash drawer
+                balance.
+              </CardDescription>
+            </div>
+            <div className="text-right">
+              <span className="font-semibold text-xs text-zinc-500">
+                Direct Collections:{" "}
+                <span className="font-extrabold text-zinc-900">
+                  ₹{totalReceived.toLocaleString("en-IN")}
+                </span>
+              </span>
+            </div>
           </div>
-          <Button className="flex items-center gap-2 rounded-lg border-zinc-100 bg-white px-6 py-6 font-extrabold text-black text-sm shadow-sm transition-transform hover:bg-zinc-100 group-hover:translate-x-1">
-            <Plus className="size-5 stroke-[2.5]" />
-            <span>NEW BILL</span>
-          </Button>
-        </div>
-      </Link>
-
-      {/* Recent Bills List for Staff */}
-      <Card className="overflow-hidden border-zinc-200 bg-white shadow-xs">
-        <CardHeader className="border-zinc-100 border-b pb-3">
-          <CardTitle className="font-extrabold text-sm text-zinc-900">
-            Recent Bills Processed
-          </CardTitle>
-          <CardDescription>
-            History of invoices generated by your account.
-          </CardDescription>
         </CardHeader>
-        <CardContent className="p-0">
-          {data.myRecentBills.length > 0 ? (
-            <div className="divide-y divide-zinc-100">
-              {data.myRecentBills.map((bill) => (
-                <div
-                  className="flex items-center justify-between px-6 py-4 transition-colors hover:bg-zinc-50/20"
-                  key={bill.id}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="rounded bg-zinc-150 px-2.5 py-1 font-bold text-xs text-zinc-900">
-                      #{bill.invoiceNumber}
-                    </span>
+        <CardContent className="pt-6">
+          <div className="grid gap-4 sm:grid-cols-4">
+            <div className="rounded-xl border border-zinc-200 bg-zinc-50/50 p-4">
+              <span className="font-bold text-[10px] text-zinc-500 uppercase tracking-wider">
+                Cash in Drawer
+              </span>
+              <p className="mt-1 font-extrabold text-xl text-zinc-950">
+                ₹{data.paymentsToday.cash.toLocaleString("en-IN")}
+              </p>
+              <p className="mt-0.5 text-[10px] text-zinc-400">
+                Physical currency
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-zinc-200 bg-zinc-50/50 p-4">
+              <span className="font-bold text-[10px] text-zinc-500 uppercase tracking-wider">
+                UPI Received
+              </span>
+              <p className="mt-1 font-extrabold text-xl text-zinc-950">
+                ₹{data.paymentsToday.upi.toLocaleString("en-IN")}
+              </p>
+              <p className="mt-0.5 text-[10px] text-zinc-400">
+                Digital payments
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-zinc-200 bg-zinc-50/50 p-4">
+              <span className="font-bold text-[10px] text-zinc-500 uppercase tracking-wider">
+                Card Swiped
+              </span>
+              <p className="mt-1 font-extrabold text-xl text-zinc-950">
+                ₹{data.paymentsToday.card.toLocaleString("en-IN")}
+              </p>
+              <p className="mt-0.5 text-[10px] text-zinc-400">POS terminals</p>
+            </div>
+
+            <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-4">
+              <span className="font-bold text-[10px] text-amber-700 uppercase tracking-wider">
+                Udhar / Credit
+              </span>
+              <p className="mt-1 font-extrabold text-amber-900 text-xl">
+                ₹{data.paymentsToday.credit.toLocaleString("en-IN")}
+              </p>
+              <p className="mt-0.5 text-[10px] text-amber-700">
+                Account balance
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Counter Guidelines: Low Stock & FEFO Expiry Alerts */}
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Low Stock Warning for Counter */}
+        <Card className="border-zinc-200 bg-white shadow-xs">
+          <CardHeader className="border-zinc-100 border-b pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 font-extrabold text-sm text-zinc-900">
+                <AlertTriangle className="size-4 text-amber-500" />
+                Counter Stock Warnings
+              </CardTitle>
+              <span className="rounded border border-amber-200 bg-amber-50 px-2 py-0.5 font-bold text-[9px] text-amber-800">
+                Low Inventory
+              </span>
+            </div>
+            <CardDescription>
+              Medicines in short supply — check before confirming customer
+              orders.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            {data.counterStockAlerts.length > 0 ? (
+              <div className="divide-y divide-zinc-100">
+                {data.counterStockAlerts.map((item) => (
+                  <div
+                    className="flex items-center justify-between px-6 py-3 text-xs"
+                    key={item.id}
+                  >
                     <div>
-                      <p className="font-bold text-sm text-zinc-900">
-                        ₹{bill.grandTotal.toLocaleString("en-IN")}
-                      </p>
+                      <p className="font-semibold text-zinc-900">{item.name}</p>
                       <p className="text-[10px] text-zinc-400">
-                        {bill.customerName || "Walk-in"} • Mode:{" "}
-                        {bill.paymentMode} •{" "}
-                        {formatRelativeOrTime(bill.createdAt)}
+                        {item.category}
                       </p>
                     </div>
+                    <span
+                      className={`rounded px-2 py-0.5 font-bold text-[10px] ${
+                        item.currentStock <= 0
+                          ? "border border-red-200 bg-red-50 text-red-700"
+                          : "border border-amber-200 bg-amber-50 text-amber-800"
+                      }`}
+                    >
+                      {item.currentStock <= 0
+                        ? "Out of Stock"
+                        : `${item.currentStock} left`}
+                    </span>
                   </div>
-                  <span
-                    className={`rounded border px-2 py-0.5 font-bold text-[9px] ${
-                      bill.paymentStatus === "PAID"
-                        ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                        : "border-amber-200 bg-amber-50 text-amber-800"
-                    }`}
+                ))}
+              </div>
+            ) : (
+              <div className="p-6 text-center">
+                <p className="font-semibold text-xs text-zinc-700">
+                  All critical medicines in stock.
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* FEFO Expiry Guidance */}
+        <Card className="border-zinc-200 bg-white shadow-xs">
+          <CardHeader className="border-zinc-100 border-b pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 font-extrabold text-sm text-zinc-900">
+                <Clock className="size-4 text-rose-500" />
+                FEFO Dispensing Guidance
+              </CardTitle>
+              <span className="rounded border border-rose-200 bg-rose-50 px-2 py-0.5 font-bold text-[9px] text-rose-800">
+                Dispense First
+              </span>
+            </div>
+            <CardDescription>
+              First-Expiry First-Out batches nearing expiration date.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            {data.counterExpiryAlerts.length > 0 ? (
+              <div className="divide-y divide-zinc-100">
+                {data.counterExpiryAlerts.map((batch) => (
+                  <div
+                    className="flex items-center justify-between px-6 py-3 text-xs"
+                    key={batch.id}
                   >
-                    {bill.paymentStatus}
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="p-8 text-center">
-              <p className="font-semibold text-xs text-zinc-600">
-                No bills generated yet today.
+                    <div>
+                      <p className="font-semibold text-zinc-900">
+                        {batch.medicineName}
+                      </p>
+                      <p className="text-[10px] text-zinc-400">
+                        Batch: {batch.batchNumber} • Stock:{" "}
+                        {batch.stockQuantity}
+                      </p>
+                    </div>
+                    <span
+                      className={`rounded-full border px-2 py-0.5 font-bold text-[10px] ${
+                        batch.isExpired || batch.daysRemaining <= 15
+                          ? "border-red-200 bg-red-50 text-red-700"
+                          : "border-amber-200 bg-amber-50 text-amber-700"
+                      }`}
+                    >
+                      {batch.isExpired
+                        ? "Expired"
+                        : `${batch.daysRemaining} days left`}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-6 text-center">
+                <p className="font-semibold text-xs text-zinc-700">
+                  No near-expiry batches to prioritize.
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Prominent Action Bar */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Link className="group" href="/dashboard/billing">
+          <div className="flex cursor-pointer items-center justify-between rounded-xl border border-zinc-900 bg-zinc-950 p-6 text-white shadow-md transition-all duration-200 hover:bg-zinc-900">
+            <div>
+              <span className="font-bold text-[10px] text-zinc-400 uppercase tracking-wider">
+                Terminal
+              </span>
+              <h4 className="font-extrabold text-base tracking-tight">
+                New Customer Bill
+              </h4>
+              <p className="mt-0.5 text-xs text-zinc-400">
+                Scan barcodes or search medicines
               </p>
-              <p className="mt-0.5 text-[11px] text-zinc-400">
-                Click NEW BILL above to process customer orders.
+            </div>
+            <Plus className="size-6 stroke-[2.5] text-white transition-transform group-hover:scale-110" />
+          </div>
+        </Link>
+
+        <Link className="group" href="/dashboard/medicines">
+          <div className="flex cursor-pointer items-center justify-between rounded-xl border border-zinc-200 bg-white p-6 text-zinc-900 shadow-xs transition-all duration-200 hover:border-zinc-300">
+            <div>
+              <span className="font-bold text-[10px] text-zinc-500 uppercase tracking-wider">
+                Inventory
+              </span>
+              <h4 className="font-extrabold text-base tracking-tight">
+                Medicine Lookup
+              </h4>
+              <p className="mt-0.5 text-xs text-zinc-500">
+                Check batch stocks & MRP rates
               </p>
             </div>
-          )}
+            <Pill className="size-5 text-zinc-400 transition-transform group-hover:scale-110" />
+          </div>
+        </Link>
+
+        <Link className="group" href="/dashboard/customers">
+          <div className="flex cursor-pointer items-center justify-between rounded-xl border border-zinc-200 bg-white p-6 text-zinc-900 shadow-xs transition-all duration-200 hover:border-zinc-300">
+            <div>
+              <span className="font-bold text-[10px] text-zinc-500 uppercase tracking-wider">
+                Directory
+              </span>
+              <h4 className="font-extrabold text-base tracking-tight">
+                Customer Accounts
+              </h4>
+              <p className="mt-0.5 text-xs text-zinc-500">
+                View phone numbers & udhar ledger
+              </p>
+            </div>
+            <Users className="size-5 text-zinc-400 transition-transform group-hover:scale-110" />
+          </div>
+        </Link>
+      </div>
+
+      {/* Recent Bills List for Staff with Instant Receipt Modal */}
+      <Card className="overflow-hidden border-zinc-200 bg-white shadow-xs">
+        <CardHeader className="border-zinc-100 border-b pb-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="font-extrabold text-sm text-zinc-900">
+                Recent Invoices Processed
+              </CardTitle>
+              <CardDescription>
+                Your latest customer billing transactions. Click Receipt to view
+                or reprint.
+              </CardDescription>
+            </div>
+            <Link href="/dashboard/billing">
+              <span className="flex items-center gap-1 font-bold text-xs text-zinc-950 hover:underline">
+                Open Billing Terminal <ArrowUpRight className="size-3" />
+              </span>
+            </Link>
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          <StaffRecentBills bills={data.myRecentBills} />
         </CardContent>
       </Card>
     </div>
@@ -604,10 +845,8 @@ export default async function DashboardPage() {
     <div className="min-h-screen space-y-8 bg-zinc-50/50 p-6 text-zinc-950 md:p-10">
       {/* Premium Welcome Banner */}
       <div className="group relative flex flex-col items-center justify-between gap-6 overflow-hidden rounded-2xl border border-zinc-800 bg-gradient-to-r from-zinc-900 via-zinc-800 to-zinc-900 p-6 text-white shadow-md md:flex-row md:p-8">
-        {/* Decorative Grid Pattern Overlay */}
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,#3f3f46_1px,transparent_1px),linear-gradient(to_bottom,#3f3f46_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-[0.06] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
 
-        {/* Left column: Text Content & Actions */}
         <div className="relative z-10 flex-1 space-y-4 text-center md:text-left">
           <div>
             <div className="inline-flex items-center gap-1.5 rounded-full border border-zinc-700/50 bg-zinc-800/80 px-2.5 py-1 font-bold text-[10px] text-zinc-300 uppercase tracking-wider">
@@ -618,8 +857,9 @@ export default async function DashboardPage() {
               Welcome back, {user.name} 👋
             </h1>
             <p className="mt-2 max-w-xl text-sm text-zinc-400 leading-relaxed">
-              Your intelligent pharmacy hub. Track daily sales, monitor medicine
-              inventory, and generate digital invoices seamlessly.
+              {isAdmin
+                ? "Your intelligent pharmacy hub. Track daily sales, monitor medicine inventory, and generate digital invoices seamlessly."
+                : "Your pharmacy billing station. Issue sales bills, check medicine batch inventory, and manage customer credit."}
             </p>
           </div>
 
@@ -639,7 +879,6 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* Right column: Mascot Image with Background Radial Glow */}
         <div className="relative flex w-full shrink-0 items-center justify-center px-4 md:w-auto">
           <div className="pointer-events-none absolute size-44 rounded-full bg-zinc-700/20 opacity-80 blur-3xl transition-transform duration-500 group-hover:scale-110" />
           <div className="relative z-10 drop-shadow-[0_8px_16px_rgba(0,0,0,0.3)] filter transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.03]">

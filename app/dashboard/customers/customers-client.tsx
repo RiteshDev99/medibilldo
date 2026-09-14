@@ -2,18 +2,18 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  Award,
-  CircleDot,
-  Clock,
-  Coins,
+  CreditCard,
   Loader2,
+  Phone,
   Plus,
   ReceiptText,
+  Search,
   UserCheck,
   Users,
 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -50,81 +50,79 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { StaffManagementData } from "@/server/dashboard";
-import { createStaff } from "@/server/users";
+import type { Customer } from "@/db/schema";
+import { createCustomer } from "@/server/billing";
 
-const staffFormSchema = z
-  .object({
-    name: z.string().min(1, "Full name is required"),
-    email: z.string().email("Invalid email address"),
-    phone: z.string().optional().or(z.literal("")),
-    password: z.string().min(8, "Password must be at least 8 characters"),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  });
+const customerFormSchema = z.object({
+  name: z.string().min(1, "Customer name is required"),
+  phone: z.string().optional().or(z.literal("")),
+  email: z.string().email("Invalid email").optional().or(z.literal("")),
+  doctorName: z.string().optional().or(z.literal("")),
+  address: z.string().optional().or(z.literal("")),
+});
 
-interface StaffClientProps {
-  initialData: StaffManagementData;
+interface CustomersClientProps {
+  initialCustomers: Customer[];
 }
 
-function formatRelativeOrDate(date: Date | string | null): string {
-  if (!date) {
-    return "No activity yet";
-  }
-  const d = new Date(date);
-  const now = new Date();
-  const diffMs = now.getTime() - d.getTime();
-  const diffMins = Math.floor(diffMs / (1000 * 60));
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-
-  if (diffMins < 1) {
-    return "Just now";
-  }
-  if (diffMins < 60) {
-    return `${diffMins}m ago`;
-  }
-  if (diffHours < 24 && d.getDate() === now.getDate()) {
-    return `${diffHours}h ago`;
-  }
-  return d.toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "short",
-  });
-}
-
-export function StaffClient({ initialData }: StaffClientProps) {
+export function CustomersClient({ initialCustomers }: CustomersClientProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const form = useForm<z.infer<typeof staffFormSchema>>({
-    resolver: zodResolver(staffFormSchema),
+  const form = useForm<z.infer<typeof customerFormSchema>>({
+    resolver: zodResolver(customerFormSchema),
     defaultValues: {
       name: "",
-      email: "",
       phone: "",
-      password: "",
-      confirmPassword: "",
+      email: "",
+      doctorName: "",
+      address: "",
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof staffFormSchema>) => {
+  const filteredCustomers = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) {
+      return initialCustomers;
+    }
+    return initialCustomers.filter((c) => {
+      const matchName = c.name.toLowerCase().includes(q);
+      const matchPhone = c.phone?.toLowerCase().includes(q);
+      const matchDoctor = c.doctorName?.toLowerCase().includes(q);
+      return matchName || matchPhone || matchDoctor;
+    });
+  }, [initialCustomers, searchQuery]);
+
+  const { totalCreditBalance, customersWithCreditCount } = useMemo(() => {
+    let creditSum = 0;
+    let withCredit = 0;
+    for (const c of initialCustomers) {
+      if (c.creditBalance > 0) {
+        creditSum += c.creditBalance;
+        withCredit += 1;
+      }
+    }
+    return {
+      totalCreditBalance: creditSum,
+      customersWithCreditCount: withCredit,
+    };
+  }, [initialCustomers]);
+
+  const onSubmit = async (values: z.infer<typeof customerFormSchema>) => {
     setIsLoading(true);
     try {
-      const res = await createStaff(values);
+      const res = await createCustomer(values);
       if (res.success) {
-        toast.success("Staff member created successfully.");
+        toast.success("Customer added successfully.");
         setIsOpen(false);
         form.reset();
         router.refresh();
       } else {
-        toast.error(res.error || "Failed to create staff member.");
+        toast.error(res.error || "Failed to create customer.");
       }
-    } catch (error) {
-      console.error(error);
+    } catch {
       toast.error("An unexpected error occurred.");
     } finally {
       setIsLoading(false);
@@ -133,18 +131,18 @@ export function StaffClient({ initialData }: StaffClientProps) {
 
   return (
     <div className="space-y-8 p-6 text-zinc-950 md:p-10">
-      {/* Title & Actions */}
+      {/* Page Title & Add Button */}
       <div className="flex flex-col gap-4 border-zinc-200 border-b pb-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <span className="font-bold text-[10px] text-zinc-500 uppercase tracking-wider">
-            Personnel & Shift Productivity
+            Directory & Ledger
           </span>
           <h1 className="mt-1 font-extrabold text-3xl text-zinc-900 tracking-tight">
-            Staff Management
+            Customer Accounts
           </h1>
           <p className="mt-0.5 text-sm text-zinc-500">
-            Manage operator accounts, track daily shift collections, and monitor
-            cashier productivity.
+            View customer contact records, primary doctors, and credit (Udhar)
+            balances.
           </p>
         </div>
         <Button
@@ -152,25 +150,25 @@ export function StaffClient({ initialData }: StaffClientProps) {
           onClick={() => setIsOpen(true)}
         >
           <Plus className="size-4" />
-          Add Staff
+          Add Customer
         </Button>
       </div>
 
-      {/* Staff Productivity KPI Summary */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Customer KPI Summary */}
+      <div className="grid gap-4 sm:grid-cols-3">
         <Card className="border-zinc-200 bg-white shadow-xs">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <span className="font-bold text-xs text-zinc-500 uppercase tracking-wider">
-              Active Operators
+              Total Customers
             </span>
             <Users className="size-4 text-zinc-400" />
           </CardHeader>
           <CardContent>
             <div className="font-extrabold text-2xl">
-              {initialData.totalStaff}
+              {initialCustomers.length}
             </div>
             <p className="mt-1 text-[10px] text-zinc-500">
-              Registered pharmacy cashiers
+              Registered pharmacy buyers
             </p>
           </CardContent>
         </Card>
@@ -178,167 +176,167 @@ export function StaffClient({ initialData }: StaffClientProps) {
         <Card className="border-zinc-200 bg-white shadow-xs">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <span className="font-bold text-xs text-zinc-500 uppercase tracking-wider">
-              Today&apos;s Staff Sales
+              Outstanding Credit (Udhar)
             </span>
-            <Coins className="size-4 text-zinc-400" />
+            <CreditCard className="size-4 text-amber-500" />
           </CardHeader>
           <CardContent>
-            <div className="font-extrabold text-2xl">
-              ₹{initialData.todayStaffSales.toLocaleString("en-IN")}
-            </div>
-            <p className="mt-1 font-semibold text-[10px] text-emerald-600">
-              Collected across active shifts
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-zinc-200 bg-white shadow-xs">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <span className="font-bold text-xs text-zinc-500 uppercase tracking-wider">
-              Today&apos;s Staff Bills
-            </span>
-            <ReceiptText className="size-4 text-zinc-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="font-extrabold text-2xl">
-              {initialData.todayStaffBills}
-            </div>
-            <p className="mt-1 text-[10px] text-zinc-500">
-              Invoices generated today
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-zinc-200 bg-white shadow-xs">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <span className="font-bold text-xs text-zinc-500 uppercase tracking-wider">
-              Top Performer Today
-            </span>
-            <Award className="size-4 text-amber-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="truncate font-extrabold text-xl">
-              {initialData.topPerformerName || "No sales yet"}
+            <div className="font-extrabold text-2xl text-amber-900">
+              ₹{totalCreditBalance.toLocaleString("en-IN")}
             </div>
             <p className="mt-1 text-[10px] text-amber-700">
-              Highest shift revenue
+              Pending payment balance across ledger
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-zinc-200 bg-white shadow-xs">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <span className="font-bold text-xs text-zinc-500 uppercase tracking-wider">
+              Accounts with Udhar
+            </span>
+            <UserCheck className="size-4 text-zinc-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="font-extrabold text-2xl">
+              {customersWithCreditCount}
+            </div>
+            <p className="mt-1 text-[10px] text-zinc-500">
+              Customers with active credit balances
             </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Staff Catalog Table */}
+      {/* Directory Table */}
       <Card className="overflow-hidden border-zinc-200 bg-white shadow-xs">
         <CardHeader className="border-zinc-100 border-b pb-4">
-          <div className="flex items-center gap-2">
-            <UserCheck className="size-4 text-zinc-500" />
-            <CardTitle className="font-extrabold text-sm text-zinc-900">
-              Operators Performance Directory
-            </CardTitle>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <CardTitle className="font-extrabold text-sm text-zinc-900">
+                Registered Customers Directory
+              </CardTitle>
+              <CardDescription>
+                Search customer profiles by name, phone, or consulting doctor.
+              </CardDescription>
+            </div>
+            <div className="relative w-full sm:w-72">
+              <Search className="pointer-events-none absolute top-2.5 left-3 size-4 text-zinc-400" />
+              <Input
+                className="border-zinc-200 pl-9 text-xs focus:border-black"
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search name or phone..."
+                value={searchQuery}
+              />
+            </div>
           </div>
-          <CardDescription>
-            Live list of pharmacy operators with today&apos;s collections and
-            activity history.
-          </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
-          {initialData.staffList.length === 0 ? (
+          {filteredCustomers.length === 0 ? (
             <div className="p-12 text-center text-zinc-450">
               <Users className="mx-auto mb-2 size-8 text-zinc-300" />
               <p className="font-semibold text-sm text-zinc-800">
-                No staff operators found.
+                {searchQuery
+                  ? "No matching customers found."
+                  : "No customers registered yet."}
               </p>
               <p className="mt-1 text-xs text-zinc-500">
-                Add your first cashier operator to enable multi-user billing.
+                {searchQuery
+                  ? "Try searching with a different name or phone."
+                  : "Customers are automatically added during checkout or via the button above."}
               </p>
-              <Button
-                className="mt-4 bg-black text-white"
-                onClick={() => setIsOpen(true)}
-              >
-                + Add Staff
-              </Button>
+              {!searchQuery && (
+                <Button
+                  className="mt-4 bg-black text-white"
+                  onClick={() => setIsOpen(true)}
+                >
+                  + Add Customer
+                </Button>
+              )}
             </div>
           ) : (
             <Table>
               <TableHeader className="border-zinc-150 border-b bg-zinc-50/50">
                 <TableRow>
                   <TableHead className="font-bold text-[10px] text-zinc-500 uppercase tracking-wider">
-                    Operator
+                    Customer
                   </TableHead>
                   <TableHead className="font-bold text-[10px] text-zinc-500 uppercase tracking-wider">
-                    Today&apos;s Productivity
+                    Phone & Email
                   </TableHead>
                   <TableHead className="font-bold text-[10px] text-zinc-500 uppercase tracking-wider">
-                    Lifetime Collections
+                    Consulting Doctor
                   </TableHead>
                   <TableHead className="font-bold text-[10px] text-zinc-500 uppercase tracking-wider">
-                    Last Active
+                    Credit (Udhar) Balance
                   </TableHead>
                   <TableHead className="font-bold text-[10px] text-zinc-500 uppercase tracking-wider">
-                    Status
+                    Address
+                  </TableHead>
+                  <TableHead className="text-right font-bold text-[10px] text-zinc-500 uppercase tracking-wider">
+                    Action
                   </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody className="divide-y divide-zinc-150">
-                {initialData.staffList.map((item) => {
-                  const isActiveToday = item.todayBills > 0;
+                {filteredCustomers.map((c) => {
+                  const hasCredit = c.creditBalance > 0;
                   return (
                     <TableRow
                       className="transition-colors hover:bg-zinc-50/30"
-                      key={item.id}
+                      key={c.id}
                     >
-                      <TableCell>
-                        <div className="font-bold text-sm text-zinc-950">
-                          {item.name}
-                        </div>
-                        <div className="text-[11px] text-zinc-500">
-                          {item.email}
-                        </div>
+                      <TableCell className="font-bold text-sm text-zinc-950">
+                        {c.name}
                       </TableCell>
 
-                      <TableCell>
-                        <div className="font-extrabold text-sm text-zinc-950">
-                          ₹{item.todaySales.toLocaleString("en-IN")}
-                        </div>
-                        <div className="text-[10px] text-zinc-500">
-                          {item.todayBills}{" "}
-                          {item.todayBills === 1 ? "bill" : "bills"} today
-                        </div>
+                      <TableCell className="text-xs text-zinc-700">
+                        {c.phone ? (
+                          <div className="flex items-center gap-1">
+                            <Phone className="size-3 text-zinc-400" />
+                            <span>{c.phone}</span>
+                          </div>
+                        ) : (
+                          <span className="text-zinc-400">No phone</span>
+                        )}
+                        {c.email && (
+                          <div className="text-[11px] text-zinc-400">
+                            {c.email}
+                          </div>
+                        )}
                       </TableCell>
 
-                      <TableCell>
-                        <div className="font-semibold text-xs text-zinc-800">
-                          ₹{item.lifetimeSales.toLocaleString("en-IN")}
-                        </div>
-                        <div className="text-[10px] text-zinc-400">
-                          {item.lifetimeBills} total bills
-                        </div>
-                      </TableCell>
-
-                      <TableCell className="text-xs text-zinc-500">
-                        <span className="flex items-center gap-1.5">
-                          <Clock className="size-3 text-zinc-400" />
-                          {formatRelativeOrDate(item.lastActive)}
-                        </span>
+                      <TableCell className="text-xs text-zinc-600">
+                        {c.doctorName ? `Dr. ${c.doctorName}` : "—"}
                       </TableCell>
 
                       <TableCell>
                         <span
-                          className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-bold text-[9px] uppercase tracking-wider ${
-                            isActiveToday
-                              ? "border border-emerald-200 bg-emerald-50 text-emerald-800"
-                              : "border border-zinc-200 bg-zinc-100 text-zinc-600"
+                          className={`rounded px-2 py-0.5 font-bold text-xs ${
+                            hasCredit
+                              ? "border border-amber-200 bg-amber-50 text-amber-900"
+                              : "text-zinc-600"
                           }`}
                         >
-                          <CircleDot
-                            className={`size-2.5 ${
-                              isActiveToday
-                                ? "fill-emerald-500 text-emerald-500"
-                                : "text-zinc-400"
-                            }`}
-                          />
-                          {isActiveToday ? "Active Today" : "Offline"}
+                          ₹{c.creditBalance.toLocaleString("en-IN")}
                         </span>
+                      </TableCell>
+
+                      <TableCell className="max-w-[180px] truncate text-xs text-zinc-500">
+                        {c.address || "—"}
+                      </TableCell>
+
+                      <TableCell className="text-right">
+                        <Link href="/dashboard/billing">
+                          <Button
+                            className="cursor-pointer gap-1 border-zinc-200 font-semibold text-[11px] hover:bg-zinc-100"
+                            size="sm"
+                            variant="outline"
+                          >
+                            <ReceiptText className="size-3" />
+                            <span>Bill</span>
+                          </Button>
+                        </Link>
                       </TableCell>
                     </TableRow>
                   );
@@ -349,21 +347,21 @@ export function StaffClient({ initialData }: StaffClientProps) {
         </CardContent>
       </Card>
 
-      {/* Add Staff Dialog */}
+      {/* Add Customer Modal Dialog */}
       <Dialog onOpenChange={setIsOpen} open={isOpen}>
         <DialogContent className="max-w-md border-zinc-200 bg-white">
           <DialogHeader>
             <DialogTitle className="font-extrabold text-lg text-zinc-950">
-              Add Staff Operator
+              Register Customer
             </DialogTitle>
             <DialogDescription className="text-sm text-zinc-550">
-              Create a new operator account for your pharmacy. They can log in
-              using these credentials to generate sales bills.
+              Add a customer profile for billing records, tax invoices, and
+              credit/Udhar tracking.
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
             <form
-              className="space-y-4 pt-2"
+              className="space-y-3.5 pt-2"
               onSubmit={form.handleSubmit(onSubmit)}
             >
               <FormField
@@ -372,12 +370,12 @@ export function StaffClient({ initialData }: StaffClientProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="font-semibold text-xs text-zinc-700">
-                      Full Name *
+                      Customer Name *
                     </FormLabel>
                     <FormControl>
                       <Input
                         className="border-zinc-200 focus:border-black"
-                        placeholder="e.g. Amit Kumar"
+                        placeholder="e.g. Ramesh Patel"
                         {...field}
                       />
                     </FormControl>
@@ -385,33 +383,14 @@ export function StaffClient({ initialData }: StaffClientProps) {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="font-semibold text-xs text-zinc-700">
-                      Email *
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        className="border-zinc-200 focus:border-black"
-                        placeholder="e.g. amit@example.com"
-                        type="email"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+
               <FormField
                 control={form.control}
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="font-semibold text-xs text-zinc-700">
-                      Phone
+                      Phone Number
                     </FormLabel>
                     <FormControl>
                       <Input
@@ -424,19 +403,19 @@ export function StaffClient({ initialData }: StaffClientProps) {
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
-                name="password"
+                name="doctorName"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="font-semibold text-xs text-zinc-700">
-                      Password *
+                      Consulting Doctor
                     </FormLabel>
                     <FormControl>
                       <Input
                         className="border-zinc-200 focus:border-black"
-                        placeholder="••••••••"
-                        type="password"
+                        placeholder="e.g. Dr. Verma"
                         {...field}
                       />
                     </FormControl>
@@ -444,19 +423,20 @@ export function StaffClient({ initialData }: StaffClientProps) {
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
-                name="confirmPassword"
+                name="email"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="font-semibold text-xs text-zinc-700">
-                      Confirm Password *
+                      Email Address
                     </FormLabel>
                     <FormControl>
                       <Input
                         className="border-zinc-200 focus:border-black"
-                        placeholder="••••••••"
-                        type="password"
+                        placeholder="e.g. ramesh@example.com"
+                        type="email"
                         {...field}
                       />
                     </FormControl>
@@ -464,6 +444,27 @@ export function StaffClient({ initialData }: StaffClientProps) {
                   </FormItem>
                 )}
               />
+
+              <FormField
+                control={form.control}
+                name="address"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="font-semibold text-xs text-zinc-700">
+                      Address
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        className="border-zinc-200 focus:border-black"
+                        placeholder="e.g. Sector 4, City"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <DialogFooter className="gap-2 pt-4">
                 <Button
                   className="cursor-pointer border-zinc-200 bg-white"
@@ -482,7 +483,7 @@ export function StaffClient({ initialData }: StaffClientProps) {
                   {isLoading ? (
                     <Loader2 className="size-4 animate-spin" />
                   ) : (
-                    "Add Staff"
+                    "Save Customer"
                   )}
                 </Button>
               </DialogFooter>
