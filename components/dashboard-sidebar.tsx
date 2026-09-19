@@ -62,6 +62,7 @@ export function DashboardSidebar({ user, storeName }: SidebarProps) {
     { name: "Billing", href: "/dashboard/billing", icon: ReceiptText },
     { name: "Customers", href: "/dashboard/customers", icon: Users },
     { name: "Medicines", href: "/dashboard/medicines", icon: Pill },
+    { name: "Inventory", href: "/dashboard/inventory", icon: Package },
   ];
 
   const superAdminLinks = [
