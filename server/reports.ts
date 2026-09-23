@@ -172,8 +172,7 @@ export async function getStoreReportsData(
     totalCessCollected = Math.round(totalCessCollected * 100) / 100;
     totalCOGS = Math.round(totalCOGS * 100) / 100;
 
-    const totalNetSales =
-      Math.round((totalSubtotal - totalDiscountGiven) * 100) / 100;
+    const totalNetSales = Math.round(totalSubtotal * 100) / 100;
     const totalGrossProfit = Math.max(
       0,
       Math.round((totalGrossSales - totalCOGS) * 100) / 100
@@ -325,38 +324,107 @@ export async function getStoreReportsData(
       })
       .sort((a, b) => b.totalSales - a.totalSales);
 
-    // 8. Timeline Trend
-    const timelineMap = new Map<
-      string,
-      { label: string; gross: number; count: number }
-    >();
-    const ascInvoices = [...periodInvoices].sort(
-      (a, b) =>
-        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-    );
-    for (const inv of ascInvoices) {
-      const d = new Date(inv.createdAt);
-      const dayKey = d.toISOString().split("T")[0];
-      const labelStr = d.toLocaleDateString("en-IN", {
-        day: "numeric",
-        month: "short",
-      });
-      if (!timelineMap.has(dayKey))
-        timelineMap.set(dayKey, { label: labelStr, gross: 0, count: 0 });
-      const pt = timelineMap.get(dayKey)!;
-      pt.gross += inv.grandTotal || 0;
-      pt.count += 1;
-    }
+    // 8. Adaptive Timeline Trend based on selected timeframe
+    let salesTimeline: SalesTimelinePoint[] = [];
 
-    const salesTimeline: SalesTimelinePoint[] = Array.from(
-      timelineMap.entries()
-    ).map(([date, v]) => ({
-      date,
-      formattedDate: v.label,
-      grossSales: Math.round(v.gross * 100) / 100,
-      billsCount: v.count,
-      profit: 0,
-    }));
+    if (options.preset === "today" || options.preset === "yesterday") {
+      const hourlyBuckets = [
+        { label: "8-11 AM", gross: 0, count: 0 },
+        { label: "11-2 PM", gross: 0, count: 0 },
+        { label: "2-5 PM", gross: 0, count: 0 },
+        { label: "5-8 PM", gross: 0, count: 0 },
+        { label: "8-11 PM", gross: 0, count: 0 },
+        { label: "Late/Other", gross: 0, count: 0 },
+      ];
+
+      for (const inv of periodInvoices) {
+        const hour = new Date(inv.createdAt).getHours();
+        let idx = 5;
+        if (hour >= 8 && hour < 11) idx = 0;
+        else if (hour >= 11 && hour < 14) idx = 1;
+        else if (hour >= 14 && hour < 17) idx = 2;
+        else if (hour >= 17 && hour < 20) idx = 3;
+        else if (hour >= 20 && hour < 23) idx = 4;
+
+        hourlyBuckets[idx].gross += inv.grandTotal || 0;
+        hourlyBuckets[idx].count += 1;
+      }
+
+      salesTimeline = hourlyBuckets.map((b, i) => ({
+        date: `slot-${i}`,
+        formattedDate: b.label,
+        grossSales: Math.round(b.gross * 100) / 100,
+        billsCount: b.count,
+        profit: 0,
+      }));
+    } else if (options.preset === "thisYear") {
+      const monthNames = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ];
+      const monthBuckets = monthNames.map((name) => ({
+        label: name,
+        gross: 0,
+        count: 0,
+      }));
+
+      for (const inv of periodInvoices) {
+        const mIdx = new Date(inv.createdAt).getMonth();
+        if (monthBuckets[mIdx]) {
+          monthBuckets[mIdx].gross += inv.grandTotal || 0;
+          monthBuckets[mIdx].count += 1;
+        }
+      }
+
+      salesTimeline = monthBuckets.map((b, idx) => ({
+        date: `month-${idx}`,
+        formattedDate: b.label,
+        grossSales: Math.round(b.gross * 100) / 100,
+        billsCount: b.count,
+        profit: 0,
+      }));
+    } else {
+      const timelineMap = new Map<
+        string,
+        { label: string; gross: number; count: number }
+      >();
+      const ascInvoices = [...periodInvoices].sort(
+        (a, b) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      );
+      for (const inv of ascInvoices) {
+        const d = new Date(inv.createdAt);
+        const dayKey = d.toISOString().split("T")[0];
+        const labelStr = d.toLocaleDateString("en-IN", {
+          day: "numeric",
+          month: "short",
+        });
+        if (!timelineMap.has(dayKey)) {
+          timelineMap.set(dayKey, { label: labelStr, gross: 0, count: 0 });
+        }
+        const pt = timelineMap.get(dayKey)!;
+        pt.gross += inv.grandTotal || 0;
+        pt.count += 1;
+      }
+
+      salesTimeline = Array.from(timelineMap.entries()).map(([date, v]) => ({
+        date,
+        formattedDate: v.label,
+        grossSales: Math.round(v.gross * 100) / 100,
+        billsCount: v.count,
+        profit: 0,
+      }));
+    }
 
     // 9. Invoices List
     const invoices: InvoiceReportRow[] = periodInvoices.map((inv) => ({

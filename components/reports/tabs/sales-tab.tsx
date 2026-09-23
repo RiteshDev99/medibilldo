@@ -1,7 +1,7 @@
 "use client";
 
-import { Eye, Search, X } from "lucide-react";
-import { useMemo } from "react";
+import { ChevronLeft, ChevronRight, Eye, Search, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatCurrency } from "@/lib/utils";
@@ -14,12 +14,16 @@ interface SalesTabProps {
   onViewInvoice: (invoiceId: string) => void;
 }
 
+const PAGE_SIZE = 15;
+
 export function SalesTab({
   invoices,
   searchQuery,
   onSearchChange,
   onViewInvoice,
 }: SalesTabProps) {
+  const [currentPage, setCurrentPage] = useState(1);
+
   const filteredInvoices = useMemo(() => {
     if (!searchQuery.trim()) return invoices;
     const q = searchQuery.toLowerCase();
@@ -32,6 +36,21 @@ export function SalesTab({
         inv.cashierName.toLowerCase().includes(q)
     );
   }, [invoices, searchQuery]);
+
+  // Reset page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredInvoices.length / PAGE_SIZE)
+  );
+  const startIndex = (currentPage - 1) * PAGE_SIZE;
+  const paginatedInvoices = filteredInvoices.slice(
+    startIndex,
+    startIndex + PAGE_SIZE
+  );
 
   return (
     <div className="space-y-4">
@@ -89,7 +108,7 @@ export function SalesTab({
                   </td>
                 </tr>
               ) : (
-                filteredInvoices.map((inv) => (
+                paginatedInvoices.map((inv) => (
                   <tr
                     className="transition-colors hover:bg-zinc-50/80"
                     key={inv.id}
@@ -159,6 +178,52 @@ export function SalesTab({
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Footer */}
+        {filteredInvoices.length > PAGE_SIZE && (
+          <div className="flex items-center justify-between border-zinc-100 border-t bg-zinc-50/50 px-4 py-2.5 text-xs text-zinc-600 print:hidden">
+            <div>
+              Showing{" "}
+              <strong className="text-zinc-900">{startIndex + 1}</strong> to{" "}
+              <strong className="text-zinc-900">
+                {Math.min(startIndex + PAGE_SIZE, filteredInvoices.length)}
+              </strong>{" "}
+              of{" "}
+              <strong className="text-zinc-900">
+                {filteredInvoices.length}
+              </strong>{" "}
+              entries
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              <Button
+                className="h-7 px-2 text-xs"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                size="sm"
+                variant="outline"
+              >
+                <ChevronLeft className="mr-0.5 size-3.5" />
+                Previous
+              </Button>
+              <span className="px-2 font-semibold">
+                Page {currentPage} of {totalPages}
+              </span>
+              <Button
+                className="h-7 px-2 text-xs"
+                disabled={currentPage >= totalPages}
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(totalPages, p + 1))
+                }
+                size="sm"
+                variant="outline"
+              >
+                Next
+                <ChevronRight className="ml-0.5 size-3.5" />
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

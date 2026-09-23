@@ -54,42 +54,47 @@ export function OverviewTab({ data, onNavigateTab }: OverviewTabProps) {
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="flex h-56 items-end justify-between gap-1 border-zinc-200 border-b pt-6 pb-2 sm:gap-2">
-                  {data.salesTimeline.map((pt, i) => {
-                    const heightPct =
-                      maxTimelineSales > 0
-                        ? Math.max(8, (pt.grossSales / maxTimelineSales) * 100)
-                        : 8;
-                    const isPeak =
-                      pt.grossSales === maxTimelineSales &&
-                      maxTimelineSales > 0;
-                    return (
-                      <div
-                        className="group relative flex h-full flex-1 flex-col items-center justify-end"
-                        key={pt.date || i}
-                      >
-                        <div className="pointer-events-none absolute -top-10 z-30 whitespace-nowrap rounded bg-zinc-900 px-2 py-1 text-[10px] text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100">
-                          <p className="font-bold">
-                            ₹{pt.grossSales.toLocaleString("en-IN")}
-                          </p>
-                          <p className="text-[9px] text-zinc-400">
-                            {pt.billsCount} bills
-                          </p>
-                        </div>
+                <div className="scrollbar-thin overflow-x-auto pb-1">
+                  <div className="flex h-56 min-w-[420px] items-end justify-between gap-1 border-zinc-200 border-b pt-6 pb-2 sm:min-w-0 sm:gap-2">
+                    {data.salesTimeline.map((pt, i) => {
+                      const heightPct =
+                        maxTimelineSales > 0
+                          ? Math.max(
+                              8,
+                              (pt.grossSales / maxTimelineSales) * 100
+                            )
+                          : 8;
+                      const isPeak =
+                        pt.grossSales === maxTimelineSales &&
+                        maxTimelineSales > 0;
+                      return (
                         <div
-                          className={`w-full max-w-[28px] rounded-t-sm transition-all duration-300 ${
-                            isPeak
-                              ? "bg-zinc-950"
-                              : "bg-zinc-300 hover:bg-zinc-800"
-                          }`}
-                          style={{ height: `${heightPct}%` }}
-                        />
-                        <span className="mt-2 max-w-[40px] select-none truncate text-[9px] text-zinc-500">
-                          {pt.formattedDate}
-                        </span>
-                      </div>
-                    );
-                  })}
+                          className="group relative flex h-full flex-1 flex-col items-center justify-end"
+                          key={pt.date || i}
+                        >
+                          <div className="pointer-events-none absolute -top-10 z-30 whitespace-nowrap rounded bg-zinc-900 px-2 py-1 text-[10px] text-white opacity-0 shadow-md transition-opacity group-hover:opacity-100">
+                            <p className="font-bold">
+                              ₹{pt.grossSales.toLocaleString("en-IN")}
+                            </p>
+                            <p className="text-[9px] text-zinc-400">
+                              {pt.billsCount} bills
+                            </p>
+                          </div>
+                          <div
+                            className={`w-full max-w-[28px] rounded-t-sm transition-all duration-300 ${
+                              isPeak
+                                ? "bg-zinc-950"
+                                : "bg-zinc-300 hover:bg-zinc-800"
+                            }`}
+                            style={{ height: `${heightPct}%` }}
+                          />
+                          <span className="mt-2 max-w-[40px] select-none truncate text-[9px] text-zinc-500">
+                            {pt.formattedDate}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
                 <div className="flex items-center justify-between text-xs text-zinc-500">
                   <span>

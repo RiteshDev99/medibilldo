@@ -137,17 +137,26 @@ export function ProfitTab({
                         {formatCurrency(p.grossProfit)}
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <span
-                          className={`rounded border px-2 py-0.5 font-bold text-[10px] ${
-                            p.marginPercent >= 20
-                              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                              : p.marginPercent >= 10
-                                ? "border-amber-200 bg-amber-50 text-amber-800"
-                                : "border-rose-200 bg-rose-50 text-rose-800"
-                          }`}
-                        >
-                          {p.marginPercent}%
-                        </span>
+                        {p.totalCost === 0 ? (
+                          <span
+                            className="rounded border border-zinc-200 bg-zinc-100 px-1.5 py-0.5 font-semibold text-[9px] text-zinc-600"
+                            title="Batch purchase rate was not entered"
+                          >
+                            Cost Not Set
+                          </span>
+                        ) : (
+                          <span
+                            className={`rounded border px-2 py-0.5 font-bold text-[10px] ${
+                              p.marginPercent >= 20
+                                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                                : p.marginPercent >= 10
+                                  ? "border-amber-200 bg-amber-50 text-amber-800"
+                                  : "border-rose-200 bg-rose-50 text-rose-800"
+                            }`}
+                          >
+                            {p.marginPercent}%
+                          </span>
+                        )}
                       </td>
                     </tr>
                   ))

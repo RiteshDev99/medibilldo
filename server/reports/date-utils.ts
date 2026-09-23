@@ -91,10 +91,10 @@ export function resolveDateRange(options: DateRangeOptions): {
     }
     case "custom": {
       if (options.startDate && options.endDate) {
-        const start = new Date(options.startDate);
-        start.setHours(0, 0, 0, 0);
-        const end = new Date(options.endDate);
-        end.setHours(23, 59, 59, 999);
+        const [sYear, sMonth, sDay] = options.startDate.split("-").map(Number);
+        const [eYear, eMonth, eDay] = options.endDate.split("-").map(Number);
+        const start = new Date(sYear, sMonth - 1, sDay, 0, 0, 0, 0);
+        const end = new Date(eYear, eMonth - 1, eDay, 23, 59, 59, 999);
         return {
           start,
           end,
