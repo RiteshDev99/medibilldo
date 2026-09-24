@@ -95,16 +95,16 @@ export function LoginForm({
                 <FormLabel className="font-medium text-xs text-zinc-700">
                   Email
                 </FormLabel>
-                <FormControl>
-                  <div className="relative">
-                    <User className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-zinc-400" />
+                <div className="relative">
+                  <User className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-zinc-400" />
+                  <FormControl>
                     <Input
                       className="rounded-lg border-zinc-200 bg-zinc-50/50 pl-9 text-sm focus:border-black"
                       placeholder="m@example.com"
                       {...field}
                     />
-                  </div>
-                </FormControl>
+                  </FormControl>
+                </div>
                 <FormMessage />
               </FormItem>
             )}
@@ -126,28 +126,28 @@ export function LoginForm({
                     Forgot your password?
                   </Link>
                 </div>
-                <FormControl>
-                  <div className="relative">
-                    <Lock className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-zinc-400" />
+                <div className="relative">
+                  <Lock className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-zinc-400" />
+                  <FormControl>
                     <Input
                       className="rounded-lg border-zinc-200 bg-zinc-50/50 pr-10 pl-9 text-sm focus:border-black"
                       placeholder="••••••••"
                       type={showPassword ? "text" : "password"}
                       {...field}
                     />
-                    <button
-                      className="absolute top-1/2 right-3 -translate-y-1/2 text-zinc-400 transition-colors hover:text-zinc-900"
-                      onClick={() => setShowPassword(!showPassword)}
-                      type="button"
-                    >
-                      {showPassword ? (
-                        <EyeOff className="size-4" />
-                      ) : (
-                        <Eye className="size-4" />
-                      )}
-                    </button>
-                  </div>
-                </FormControl>
+                  </FormControl>
+                  <button
+                    className="absolute top-1/2 right-3 -translate-y-1/2 text-zinc-400 transition-colors hover:text-zinc-900"
+                    onClick={() => setShowPassword(!showPassword)}
+                    type="button"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="size-4" />
+                    ) : (
+                      <Eye className="size-4" />
+                    )}
+                  </button>
+                </div>
                 <FormMessage />
               </FormItem>
             )}

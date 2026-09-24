@@ -16,6 +16,7 @@ function Label({
         className
       )}
       data-slot="label"
+      suppressHydrationWarning
       {...props}
     />
   );

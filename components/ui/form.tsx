@@ -70,8 +70,12 @@ const FormItemContext = React.createContext<FormItemContextValue>(
   {} as FormItemContextValue
 );
 
-function FormItem({ className, ...props }: React.ComponentProps<"div">) {
-  const id = React.useId();
+function FormItem({ className, id: customId, ...props }: React.ComponentProps<"div">) {
+  const fallbackId = React.useId();
+  const fieldContext = React.useContext(FormFieldContext);
+  const id =
+    customId ||
+    (fieldContext?.name ? fieldContext.name.replace(/\./g, "-") : fallbackId);
 
   return (
     <FormItemContext.Provider value={{ id }}>
@@ -96,6 +100,7 @@ function FormLabel({
       data-error={!!error}
       data-slot="form-label"
       htmlFor={formItemId}
+      suppressHydrationWarning
       {...props}
     />
   );
@@ -113,6 +118,7 @@ function FormControl({ ...props }: React.ComponentProps<typeof Slot>) {
       aria-invalid={!!error}
       data-slot="form-control"
       id={formItemId}
+      suppressHydrationWarning
       {...props}
     />
   );
