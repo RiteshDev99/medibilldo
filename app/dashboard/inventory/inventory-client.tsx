@@ -31,7 +31,7 @@ import {
   X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { AddBatchModal } from "@/components/inventory/add-batch-modal";
 import { AdjustStockDialog } from "@/components/inventory/adjust-stock-dialog";
@@ -761,9 +761,9 @@ export function InventoryClient({
                     const minStock = med.reorderLevel ?? med.minimumQuantity ?? 0;
 
                     return (
-                      <>
+                      <Fragment key={med.id}>
                         <TableRow
-                          key={med.id}
+                          key={`${med.id}-main`}
                           className="hover:bg-zinc-50/60 transition-colors"
                         >
                           <TableCell className="p-2 text-center">
@@ -897,7 +897,10 @@ export function InventoryClient({
 
                         {/* Inline Nested Batches Drawer */}
                         {isExpanded && (
-                          <TableRow className="bg-zinc-50/70 border-y border-zinc-200">
+                          <TableRow
+                            key={`${med.id}-batches`}
+                            className="bg-zinc-50/70 border-y border-zinc-200"
+                          >
                             <TableCell colSpan={8} className="p-4 pl-12">
                               <div className="rounded-lg border border-zinc-200 bg-white p-3 shadow-xs">
                                 <div className="flex items-center justify-between mb-2">
@@ -1052,7 +1055,7 @@ export function InventoryClient({
                             </TableCell>
                           </TableRow>
                         )}
-                      </>
+                      </Fragment>
                     );
                   })
                 )}
