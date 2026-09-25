@@ -4,6 +4,8 @@ import { AuthLayout } from "@/components/auth-layout";
 import { LoginForm } from "@/components/forms/login-form";
 import { auth } from "@/lib/auth";
 
+export const dynamic = "force-dynamic";
+
 export default async function LoginPage() {
   let session: Awaited<ReturnType<typeof auth.api.getSession>> = null;
   try {
@@ -15,7 +17,11 @@ export default async function LoginPage() {
   }
 
   if (session) {
-    redirect("/dashboard");
+    if (session.user?.role === "SUPER_ADMIN") {
+      redirect("/super-admin");
+    } else {
+      redirect("/dashboard");
+    }
   }
 
   return (

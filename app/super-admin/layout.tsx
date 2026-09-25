@@ -1,6 +1,8 @@
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { requireSuperAdmin } from "@/server/permissions";
 
+export const dynamic = "force-dynamic";
+
 export default async function SuperAdminLayout({
   children,
 }: {

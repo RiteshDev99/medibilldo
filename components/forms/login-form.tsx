@@ -45,13 +45,17 @@ export function LoginForm({
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
 
-    const { success, message } = await signIn(values.email, values.password);
+    const res = await signIn(values.email, values.password);
 
-    if (success) {
-      toast.success(message as string);
-      router.push("/dashboard");
+    if (res.success) {
+      toast.success(res.message as string);
+      if (res.user?.role === "SUPER_ADMIN") {
+        router.push("/super-admin");
+      } else {
+        router.push("/dashboard");
+      }
     } else {
-      toast.error(message as string);
+      toast.error(res.message as string);
     }
 
     setIsLoading(false);

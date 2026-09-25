@@ -43,7 +43,7 @@ export const getCurrentUser = async () => {
 
 export const signIn = async (email: string, password: string) => {
   try {
-    await auth.api.signInEmail({
+    const res = await auth.api.signInEmail({
       body: {
         email,
         password,
@@ -53,6 +53,7 @@ export const signIn = async (email: string, password: string) => {
     return {
       success: true,
       message: "Signed in successfully.",
+      user: res?.user,
     };
   } catch (error) {
     const e = error as Error;
