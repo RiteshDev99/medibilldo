@@ -266,7 +266,7 @@ export async function updateMedicine(
     const currentUser = session.currentUser;
 
     // Verify role permissions
-    if (currentUser.role !== "ADMIN") {
+    if (currentUser.role !== "ADMIN" && currentUser.role !== "SUPER_ADMIN") {
       return { success: false, error: "Access denied. Admin role required." };
     }
 
@@ -287,45 +287,41 @@ export async function updateMedicine(
     }
 
     // Verify store ownership
-    if (existingMedicine.storeId !== storeId) {
+    if (existingMedicine.storeId !== storeId && currentUser.role !== "SUPER_ADMIN") {
       return {
         success: false,
         error: "Access denied. You cannot modify medicines of other stores.",
       };
     }
 
+    // Clean text fields
+    const name = data.name?.trim();
+    const genericName = data.genericName?.trim();
+    const category = data.category?.trim();
+    const manufacturer = data.manufacturer?.trim();
+    const packing = data.packing?.trim();
+
     // Server-side validation
-    if (
-      !(
-        data.name &&
-        data.packing &&
-        data.genericName &&
-        data.category &&
-        data.manufacturer
-      )
-    ) {
-      return { success: false, error: "Required fields are missing." };
+    if (!name || !packing || !genericName || !category || !manufacturer) {
+      return { success: false, error: "Required fields (Name, Packing, Generic Name, Category, Manufacturer) are missing." };
     }
-    if (data.conversionFactor <= 0) {
-      return {
-        success: false,
-        error: "Conversion Factor must be a positive integer.",
-      };
+
+    const conversionFactor = Math.max(1, Math.floor(Number(data.conversionFactor) || 1));
+    const mrp = Number(data.mrp);
+
+    if (isNaN(mrp) || mrp <= 0) {
+      return { success: false, error: "MRP must be a valid positive number." };
     }
-    if (data.mrp <= 0) {
-      return { success: false, error: "MRP must be a positive number." };
-    }
-    if (data.minimumQuantity !== undefined && data.minimumQuantity < 0) {
-      return {
-        success: false,
-        error: "Minimum Quantity must be non-negative.",
-      };
-    }
-    if (
-      data.maximumQuantity !== undefined &&
-      data.minimumQuantity !== undefined &&
-      data.maximumQuantity < data.minimumQuantity
-    ) {
+
+    const minQ = data.minimumQuantity != null && !isNaN(Number(data.minimumQuantity))
+      ? Math.max(0, Math.floor(Number(data.minimumQuantity)))
+      : 0;
+
+    const maxQ = data.maximumQuantity != null && !isNaN(Number(data.maximumQuantity))
+      ? Math.floor(Number(data.maximumQuantity))
+      : null;
+
+    if (maxQ !== null && maxQ < minQ) {
       return {
         success: false,
         error: "Maximum Quantity cannot be less than Minimum Quantity.",
@@ -333,17 +329,18 @@ export async function updateMedicine(
     }
 
     // Verify barcode uniqueness within the store if barcode is provided
-    if (data.barcode && data.barcode !== existingMedicine.barcode) {
+    const trimmedBarcode = data.barcode?.trim() || null;
+    if (trimmedBarcode && trimmedBarcode !== existingMedicine.barcode) {
       const existingBarcode = await db.query.medicine.findFirst({
         where: and(
           eq(medicine.storeId, storeId),
-          eq(medicine.barcode, data.barcode)
+          eq(medicine.barcode, trimmedBarcode)
         ),
       });
-      if (existingBarcode) {
+      if (existingBarcode && existingBarcode.id !== id) {
         return {
           success: false,
-          error: `Barcode '${data.barcode}' is already in use by another product in this store.`,
+          error: `Barcode '${trimmedBarcode}' is already in use by another product in this store.`,
         };
       }
     }
@@ -351,35 +348,35 @@ export async function updateMedicine(
     await db
       .update(medicine)
       .set({
-        name: data.name,
-        shortName: data.shortName || null,
-        genericName: data.genericName,
-        manufacturer: data.manufacturer,
-        brand: data.brand || null,
-        category: data.category,
-        productType: data.productType || null,
-        packing: data.packing,
-        quantityVolume: data.quantityVolume || null,
-        uqcUnit: data.uqcUnit || null,
-        conversionFactor: Math.floor(data.conversionFactor),
-        hsn: data.hsn || null,
-        gst: data.gst,
-        cess: data.cess ?? 0,
-        mrp: data.mrp,
-        pRate: data.pRate ?? null,
-        cost: data.cost ?? null,
-        rateA: data.rateA ?? null,
-        rateB: data.rateB ?? null,
-        rateC: data.rateC ?? null,
-        minimumQuantity: data.minimumQuantity ?? 0,
-        maximumQuantity: data.maximumQuantity ?? null,
-        reorderLevel: data.reorderLevel ?? null,
-        reorderQuantity: data.reorderQuantity ?? null,
-        barcode: data.barcode || null,
-        drugSchedule: data.drugSchedule || null,
-        prescriptionRequired: data.prescriptionRequired,
-        storageCondition: data.storageCondition || null,
-        status: data.status,
+        name,
+        shortName: data.shortName?.trim() || null,
+        genericName,
+        manufacturer,
+        brand: data.brand?.trim() || null,
+        category,
+        productType: data.productType?.trim() || null,
+        packing,
+        quantityVolume: data.quantityVolume?.trim() || null,
+        uqcUnit: data.uqcUnit?.trim() || null,
+        conversionFactor,
+        hsn: data.hsn?.trim() || null,
+        gst: Math.max(0, Math.round(Number(data.gst) || 0)),
+        cess: Number(data.cess) || 0,
+        mrp,
+        pRate: data.pRate != null && !isNaN(Number(data.pRate)) ? Number(data.pRate) : null,
+        cost: data.cost != null && !isNaN(Number(data.cost)) ? Number(data.cost) : null,
+        rateA: data.rateA != null && !isNaN(Number(data.rateA)) ? Number(data.rateA) : null,
+        rateB: data.rateB != null && !isNaN(Number(data.rateB)) ? Number(data.rateB) : null,
+        rateC: data.rateC != null && !isNaN(Number(data.rateC)) ? Number(data.rateC) : null,
+        minimumQuantity: minQ,
+        maximumQuantity: maxQ,
+        reorderLevel: data.reorderLevel != null && !isNaN(Number(data.reorderLevel)) ? Math.floor(Number(data.reorderLevel)) : null,
+        reorderQuantity: data.reorderQuantity != null && !isNaN(Number(data.reorderQuantity)) ? Math.floor(Number(data.reorderQuantity)) : null,
+        barcode: trimmedBarcode,
+        drugSchedule: data.drugSchedule?.trim() || null,
+        prescriptionRequired: Boolean(data.prescriptionRequired),
+        storageCondition: data.storageCondition?.trim() || null,
+        status: data.status || "ACTIVE",
         updatedAt: new Date(),
       })
       .where(eq(medicine.id, id));
@@ -394,7 +391,7 @@ export async function updateMedicine(
     return { success: true };
   } catch (error) {
     console.error("Failed to update medicine:", error);
-    return { success: false, error: "Failed to update medicine" };
+    return { success: false, error: "Failed to update medicine: " + (error instanceof Error ? error.message : "Unknown error") };
   }
 }
 

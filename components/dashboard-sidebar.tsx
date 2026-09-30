@@ -6,6 +6,7 @@ import {
   Building2,
   Coins,
   Home,
+  Loader2,
   LogOut,
   Menu,
   Package,
@@ -22,6 +23,7 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
@@ -77,9 +79,25 @@ export function DashboardSidebar({ user, storeName }: SidebarProps) {
         ? adminLinks
         : staffLinks;
 
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
   const handleLogout = async () => {
-    await authClient.signOut();
-    router.push("/");
+    if (isLoggingOut) return;
+    try {
+      setIsLoggingOut(true);
+      await authClient.signOut({
+        fetchOptions: {
+          onSuccess: () => {
+            window.location.href = "/login";
+          },
+        },
+      });
+      window.location.href = "/login";
+    } catch (error) {
+      console.error("Sign out error:", error);
+      toast.error("Failed to sign out. Please try again.");
+      setIsLoggingOut(false);
+    }
   };
 
   const SidebarContent = () => (
@@ -109,14 +127,23 @@ export function DashboardSidebar({ user, storeName }: SidebarProps) {
         </button>
       </div>
 
-      {/* Prominent Action Button: + NEW BILL */}
+      {/* Prominent Action Button: + NEW STORE for Super Admin, + NEW BILL for others */}
       <div className="px-4 py-6">
-        <Link href="/dashboard/billing" onClick={() => setIsOpen(false)}>
-          <Button className="group flex w-full items-center justify-center gap-2 rounded-lg border-transparent bg-black py-5 font-bold text-white shadow-xs transition-all hover:bg-zinc-800">
-            <Plus className="size-4 stroke-[3px] transition-transform group-hover:scale-110" />
-            <span>NEW BILL</span>
-          </Button>
-        </Link>
+        {user.role === "SUPER_ADMIN" ? (
+          <Link href="/super-admin/stores/new" onClick={() => setIsOpen(false)}>
+            <Button className="group flex w-full items-center justify-center gap-2 rounded-lg border-transparent bg-black py-5 font-bold text-white shadow-xs transition-all hover:bg-zinc-800">
+              <Plus className="size-4 stroke-[3px] transition-transform group-hover:scale-110" />
+              <span>NEW STORE</span>
+            </Button>
+          </Link>
+        ) : (
+          <Link href="/dashboard/billing" onClick={() => setIsOpen(false)}>
+            <Button className="group flex w-full items-center justify-center gap-2 rounded-lg border-transparent bg-black py-5 font-bold text-white shadow-xs transition-all hover:bg-zinc-800">
+              <Plus className="size-4 stroke-[3px] transition-transform group-hover:scale-110" />
+              <span>NEW BILL</span>
+            </Button>
+          </Link>
+        )}
       </div>
 
       {/* Navigation Links */}
@@ -166,12 +193,22 @@ export function DashboardSidebar({ user, storeName }: SidebarProps) {
           </span>
         </div>
         <Button
-          className="w-full justify-start gap-2 rounded-lg border border-zinc-200 bg-white px-3 py-2 font-semibold text-xs text-zinc-650 transition-all hover:border-zinc-300 hover:bg-white hover:text-zinc-950 hover:shadow-xs"
+          className="group/logout w-full justify-start gap-2.5 rounded-lg border border-zinc-200 bg-white px-3 py-2 font-semibold text-xs text-zinc-650 transition-all duration-200 hover:border-red-200 hover:bg-red-50 hover:text-red-600 hover:shadow-xs active:bg-red-100 disabled:pointer-events-none disabled:opacity-70"
+          disabled={isLoggingOut}
           onClick={handleLogout}
           variant="ghost"
         >
-          <LogOut className="size-3.5" />
-          <span>Sign Out</span>
+          {isLoggingOut ? (
+            <>
+              <Loader2 className="size-3.5 animate-spin text-red-600" />
+              <span className="font-semibold text-red-600">Signing out...</span>
+            </>
+          ) : (
+            <>
+              <LogOut className="size-3.5 text-zinc-500 transition-colors group-hover/logout:text-red-600" />
+              <span>Sign Out</span>
+            </>
+          )}
         </Button>
       </div>
     </div>

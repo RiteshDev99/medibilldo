@@ -1,7 +1,7 @@
 "use client";
 
 import { CheckCircle2, Plus, Printer, X } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { formatINR } from "@/lib/billing-calc";
+import { cn } from "@/lib/utils";
 
 export interface InvoicePrintData {
   invoice: {
@@ -75,19 +76,157 @@ export function InvoiceReceiptModal({
   autoPrint = false,
 }: InvoiceReceiptModalProps) {
   const receiptRef = useRef<HTMLDivElement>(null);
+  const [paperFormat, setPaperFormat] = useState<"thermal" | "a4">("thermal");
 
   const handlePrint = () => {
-    window.print();
+    if (!receiptRef.current) {
+      window.print();
+      return;
+    }
+
+    const content = receiptRef.current.innerHTML;
+    const isThermal = paperFormat === "thermal";
+
+    // Create an isolated hidden iframe dedicated to printing the receipt
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "fixed";
+    iframe.style.top = "0";
+    iframe.style.left = "0";
+    iframe.style.width = "1px";
+    iframe.style.height = "1px";
+    iframe.style.opacity = "0";
+    iframe.style.border = "none";
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow?.document;
+    if (!doc) {
+      window.print();
+      return;
+    }
+
+    doc.open();
+    doc.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>Invoice #${invoice.invoiceNumber}</title>
+          <style>
+            @page {
+              size: auto;
+              margin: ${isThermal ? "2mm" : "8mm"};
+            }
+            *, *::before, *::after {
+              box-sizing: border-box;
+              margin: 0;
+              padding: 0;
+            }
+            html, body {
+              background: #fff;
+              color: #000;
+              font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+              font-size: ${isThermal ? "11px" : "12px"};
+              line-height: 1.35;
+              width: 100%;
+              margin: 0 auto;
+              padding: ${isThermal ? "1mm" : "4mm"};
+            }
+            .receipt-body {
+              width: 100%;
+              max-width: ${isThermal ? "74mm" : "185mm"};
+              margin: 0 auto;
+              page-break-inside: avoid;
+              break-inside: avoid;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+            }
+            th, td {
+              padding: 2px 1px;
+            }
+            .border-b { border-bottom: 1px solid #000; }
+            .border-t { border-top: 1px solid #000; }
+            .border-t-2 { border-top: 2px solid #000; }
+            .border-dashed { border-style: dashed; }
+            .border-zinc-900 { border-color: #000; }
+            .border-zinc-400 { border-color: #71717a; }
+            .border-zinc-300 { border-color: #a1a1aa; }
+            .border-zinc-200 { border-color: #e4e4e7; }
+            .text-center { text-align: center; }
+            .text-right { text-align: right; }
+            .text-left { text-align: left; }
+            .font-bold { font-weight: 700; }
+            .font-extrabold { font-weight: 800; }
+            .font-semibold { font-weight: 600; }
+            .uppercase { text-transform: uppercase; }
+            .tracking-wide { letter-spacing: 0.025em; }
+            .tracking-wider { letter-spacing: 0.05em; }
+            .tracking-widest { letter-spacing: 0.1em; }
+            .flex { display: flex; }
+            .flex-wrap { flex-wrap: wrap; }
+            .justify-between { justify-content: space-between; }
+            .justify-center { justify-content: center; }
+            .items-center { align-items: center; }
+            .gap-2 { gap: 8px; }
+            .gap-3 { gap: 12px; }
+            .grid { display: grid; }
+            .grid-cols-2 { grid-template-columns: 1fr 1fr; }
+            .py-0\\.5 { padding-top: 2px; padding-bottom: 2px; }
+            .py-1 { padding-top: 4px; padding-bottom: 4px; }
+            .py-2 { padding-top: 8px; padding-bottom: 8px; }
+            .py-2\\.5 { padding-top: 10px; padding-bottom: 10px; }
+            .pt-1 { padding-top: 4px; }
+            .pt-2 { padding-top: 8px; }
+            .pt-3 { padding-top: 12px; }
+            .pb-3 { padding-bottom: 12px; }
+            .mt-0\\.5 { margin-top: 2px; }
+            .mt-1 { margin-top: 4px; }
+            .mt-1\\.5 { margin-top: 6px; }
+            .mt-4 { margin-top: 14px; }
+            .text-xs { font-size: 11px; }
+            .text-sm { font-size: 13px; }
+            .text-base { font-size: 15px; }
+            .text-\\[9px\\] { font-size: 9px; }
+            .text-\\[10px\\] { font-size: 10px; }
+            .text-\\[11px\\] { font-size: 11px; }
+            .leading-tight { line-height: 1.25; }
+            .divide-y > * + * { border-top: 1px dashed #e4e4e7; }
+          </style>
+        </head>
+        <body>
+          <div class="receipt-body">
+            ${content}
+          </div>
+        </body>
+      </html>
+    `);
+    doc.close();
+
+    setTimeout(() => {
+      try {
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
+      } catch (err) {
+        console.error("Print error:", err);
+      } finally {
+        setTimeout(() => {
+          if (document.body.contains(iframe)) {
+            document.body.removeChild(iframe);
+          }
+        }, 2000);
+      }
+    }, 250);
   };
 
   useEffect(() => {
     if (isOpen && autoPrint) {
       const timer = setTimeout(() => {
-        window.print();
-      }, 350);
+        handlePrint();
+      }, 400);
       return () => clearTimeout(timer);
     }
-  }, [isOpen, autoPrint]);
+  }, [isOpen, autoPrint, paperFormat]);
 
   if (!data) return null;
 
@@ -99,26 +238,62 @@ export function InvoiceReceiptModal({
 
   return (
     <Dialog onOpenChange={(open) => !open && onClose()} open={isOpen}>
-      <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-xl">
+      <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-xl print:m-0 print:border-none print:p-0 print:shadow-none print:max-h-none print:w-full print:max-w-none print:overflow-visible print:bg-transparent print:static print:transform-none">
         <DialogHeader className="print:hidden">
-          <div className="flex items-center gap-2">
-            <div className="flex size-9 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
-              <CheckCircle2 className="size-5" />
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2">
+              <div className="flex size-9 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+                <CheckCircle2 className="size-5" />
+              </div>
+              <div>
+                <DialogTitle className="font-extrabold text-base text-zinc-900">
+                  Invoice Generated Successfully
+                </DialogTitle>
+                <p className="font-mono text-xs text-zinc-500">
+                  Bill #{invoice.invoiceNumber}
+                </p>
+              </div>
             </div>
-            <div>
-              <DialogTitle className="font-extrabold text-base text-zinc-900">
-                Invoice Generated Successfully
-              </DialogTitle>
-              <p className="font-mono text-xs text-zinc-500">
-                Bill #{invoice.invoiceNumber}
-              </p>
+
+            {/* Paper Format Selector */}
+            <div className="flex items-center rounded-lg border border-zinc-200 bg-zinc-50 p-0.5 text-[11px] font-semibold text-zinc-600">
+              <button
+                type="button"
+                onClick={() => setPaperFormat("thermal")}
+                className={cn(
+                  "rounded-md px-2.5 py-1 transition-all",
+                  paperFormat === "thermal"
+                    ? "bg-white text-zinc-950 font-bold shadow-2xs"
+                    : "text-zinc-500 hover:text-zinc-900"
+                )}
+              >
+                Thermal (80mm)
+              </button>
+              <button
+                type="button"
+                onClick={() => setPaperFormat("a4")}
+                className={cn(
+                  "rounded-md px-2.5 py-1 transition-all",
+                  paperFormat === "a4"
+                    ? "bg-white text-zinc-950 font-bold shadow-2xs"
+                    : "text-zinc-500 hover:text-zinc-900"
+                )}
+              >
+                Full / A4
+              </button>
             </div>
           </div>
         </DialogHeader>
 
         {/* Printable Receipt Container */}
         <div
-          className="rounded-xl border border-zinc-200 bg-white p-6 font-mono text-xs text-zinc-950 shadow-xs print:m-0 print:border-none print:p-0 print:shadow-none"
+          className={cn(
+            "rounded-xl border border-zinc-200 bg-white p-6 font-mono text-xs text-zinc-950 shadow-xs",
+            "print:m-0 print:border-none print:p-1 print:shadow-none print:w-full print:break-inside-avoid print:page-break-inside-avoid print:break-after-avoid print:page-break-after-avoid",
+            paperFormat === "thermal"
+              ? "max-w-[340px] mx-auto print:max-w-[76mm]"
+              : "w-full print:max-w-[190mm]"
+          )}
           id="printable-receipt"
           ref={receiptRef}
         >

@@ -17,7 +17,7 @@ import {
   X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { AddBatchDialog } from "@/components/billing/add-batch-dialog";
 import {
@@ -107,6 +107,12 @@ export function MedicinesClient({
   isAdmin,
 }: MedicinesClientProps) {
   const router = useRouter();
+  const [medicines, setMedicines] = useState<MedicineWithBatches[]>(initialMedicines);
+
+  useEffect(() => {
+    setMedicines(initialMedicines);
+  }, [initialMedicines]);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("ALL");
   const [activeTab, setActiveTab] = useState<string>("ALL");
@@ -123,14 +129,14 @@ export function MedicinesClient({
 
   // Compute live inventory status for all medicines
   const medicinesWithStatus = useMemo(() => {
-    return initialMedicines.map((med) => {
+    return medicines.map((med) => {
       const inventory = calculateInventoryStatus(med, med.batches || []);
       return {
         ...med,
         inventory,
       };
     });
-  }, [initialMedicines]);
+  }, [medicines]);
 
   // Derive inventory category metrics for cards and tabs
   const counts = useMemo(() => {
@@ -264,6 +270,35 @@ export function MedicinesClient({
 
     if (res.success) {
       toast.success("Medicine updated successfully");
+      setMedicines((prev) =>
+        prev.map((m) =>
+          m.id === editingMedicine.id
+            ? {
+                ...m,
+                ...values,
+                shortName: values.shortName || null,
+                brand: values.brand || null,
+                productType: values.productType || null,
+                quantityVolume: values.quantityVolume || null,
+                uqcUnit: values.uqcUnit || null,
+                hsn: values.hsn || null,
+                cess: values.cess ?? 0,
+                pRate: values.pRate ?? null,
+                cost: values.cost ?? null,
+                rateA: values.rateA ?? null,
+                rateB: values.rateB ?? null,
+                rateC: values.rateC ?? null,
+                maximumQuantity: values.maximumQuantity ?? null,
+                reorderLevel: values.reorderLevel ?? null,
+                reorderQuantity: values.reorderQuantity ?? null,
+                barcode: values.barcode || null,
+                drugSchedule: values.drugSchedule || null,
+                storageCondition: values.storageCondition || null,
+                prescriptionRequired: values.prescriptionRequired ?? false,
+              }
+            : m
+        )
+      );
       setEditingMedicine(null);
       router.refresh();
     } else {
@@ -280,6 +315,7 @@ export function MedicinesClient({
 
     if (res.success) {
       toast.success("Medicine deleted successfully");
+      setMedicines((prev) => prev.filter((m) => m.id !== deletingMedicine.id));
       setDeletingMedicine(null);
       router.refresh();
     } else {
@@ -836,6 +872,7 @@ export function MedicinesClient({
           </DialogHeader>
           {editingMedicine && (
             <MedicineForm
+              key={editingMedicine.id}
               defaultValues={{
                 name: editingMedicine.name,
                 shortName: editingMedicine.shortName || "",

@@ -88,3 +88,22 @@
     @apply bg-background text-foreground;
   }
 }
+
+@media print {
+  @page {
+    size: auto;
+    margin: 4mm;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  .print\:hidden {
+    display: none !important;
+  }
+}
+
+

@@ -27,8 +27,8 @@ export function InvoiceDetailDialog({
 }: InvoiceDetailDialogProps) {
   return (
     <Dialog onOpenChange={(open) => !open && onClose()} open={isOpen}>
-      <DialogContent className="max-w-2xl rounded-2xl bg-white p-6 shadow-xl">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl rounded-2xl bg-white p-6 shadow-xl print:m-0 print:border-none print:p-0 print:shadow-none print:max-h-none print:w-full print:max-w-none print:overflow-visible print:bg-transparent print:static print:transform-none">
+        <DialogHeader className="print:pb-2">
           <DialogTitle className="flex items-center justify-between font-black text-lg text-zinc-950">
             <span>
               Invoice {invoiceDetails?.invoice.invoiceNumber || "Details"}
@@ -131,7 +131,7 @@ export function InvoiceDetailDialog({
           </div>
         ) : null}
 
-        <DialogFooter className="flex items-center justify-between border-zinc-100 border-t pt-2 sm:justify-between">
+        <DialogFooter className="flex items-center justify-between border-zinc-100 border-t pt-2 sm:justify-between print:hidden">
           <Button
             className="text-xs"
             onClick={onClose}
